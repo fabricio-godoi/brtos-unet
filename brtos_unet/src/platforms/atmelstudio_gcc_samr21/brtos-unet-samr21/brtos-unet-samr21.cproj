@@ -498,6 +498,15 @@
       <Value>DEBUG</Value>
       <Value>BOARD=SAMR21_XPLAINED_PRO</Value>
       <Value>__SAMR21G18A__</Value>
+      <Value>EXTINT_CALLBACK_MODE=true</Value>
+      <Value>SYSTICK_MODE</Value>
+      <Value>SPI_CALLBACK_MODE=false</Value>
+      <Value>SAL_TYPE=AT86RF2xx</Value>
+      <Value>PHY_AT86RF233</Value>
+      <Value>ARM_MATH_CM0PLUS=true</Value>
+      <Value>RTC_COUNT_ASYNC=true</Value>
+      <Value>TC_ASYNC=true</Value>
+      <Value>USART_CALLBACK_MODE=true</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
@@ -938,26 +947,6 @@
     <Compile Include="..\..\..\uNET\packet.h">
       <SubType>compile</SubType>
       <Link>brtos-unet-samr21\uNET\packet.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\uNET\radio\at86rf233\rf233-arch.h">
-      <SubType>compile</SubType>
-      <Link>brtos-unet-samr21\uNET\radio\rf233-arch.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\uNET\radio\at86rf233\rf233-config.h">
-      <SubType>compile</SubType>
-      <Link>brtos-unet-samr21\uNET\radio\rf233-config.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\uNET\radio\at86rf233\rf233-const.h">
-      <SubType>compile</SubType>
-      <Link>brtos-unet-samr21\uNET\radio\rf233-const.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\uNET\radio\at86rf233\rf233.c">
-      <SubType>compile</SubType>
-      <Link>brtos-unet-samr21\uNET\radio\rf233.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\uNET\radio\at86rf233\rf233.h">
-      <SubType>compile</SubType>
-      <Link>brtos-unet-samr21\uNET\radio\rf233.h</Link>
     </Compile>
     <Compile Include="..\..\..\uNET\radio\radio.h">
       <SubType>compile</SubType>
@@ -1559,6 +1548,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\thirdparty\at86rf233\rf233-const.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ASF\thirdparty\at86rf233\rf233.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\thirdparty\at86rf233\rf233.h">

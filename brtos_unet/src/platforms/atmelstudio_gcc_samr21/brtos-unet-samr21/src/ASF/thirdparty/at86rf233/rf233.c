@@ -72,12 +72,12 @@
 #include "rf233-const.h"
 #include "rf233-config.h"
 #include "rf233-arch.h"
-//#include "trx_access.h"
+#include "trx_access.h"
 #include "rf233.h"
 
-//#include "system_interrupt.h"
+#include "system_interrupt.h"
 
-#include "../radio.h"
+#include "radio.h"
 
 #define RADIO_TX_OK            		 RADIO_TX_ERR_NONE
 #define RADIO_TX_ERR    			 RADIO_TX_ERR_NOTSPECIFIED
@@ -1024,7 +1024,7 @@ int rf233_interrupt(void)
  */
 static void radiocore_hard_recovery(void)
 {
-  rf233_init();
+  rf233_init(NULL);
 }
 
 

@@ -46,8 +46,6 @@
 
 ..\..\..\uNET\packet.c
 
-..\..\..\uNET\radio\at86rf233\rf233.c
-
 ..\..\..\uNET\transport.c
 
 ..\..\..\uNET\trickle.c
@@ -111,6 +109,8 @@ src\ASF\sam0\utils\stdio\write.c
 src\ASF\sam0\utils\syscalls\gcc\syscalls.c
 
 src\ASF\thirdparty\at86rf233\phy.c
+
+src\ASF\thirdparty\at86rf233\rf233.c
 
 src\ASF\thirdparty\wireless\addons\sio2host\uart\sio2host.c
 

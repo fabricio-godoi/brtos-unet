@@ -1,6 +1,7 @@
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
 
+#define TERM_ENABLE                         0
 
 /****************************************************************/
 /* TASKS PRIORITY ASSIGNMENT                                    */

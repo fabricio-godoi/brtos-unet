@@ -26,7 +26,7 @@ BRTOS_TH TH_NET_APP1;
 BRTOS_TH TH_NET_APP2;
 BRTOS_TH TH_TERMINAL;
 
-#define RUN_TEST 0
+//#define RUN_TEST 0
 #if RUN_TEST
 	extern void task_run_tests(void*);
 	extern void terminal_test(void);
@@ -40,7 +40,7 @@ int main_app(void)
 /*lint -restore Enable MISRA rule (6.3) checking. */
 {
 
-  #if RUN_TEST
+  #if RUN_TEST && 0
 	terminal_test();
 	task_run_tests(NULL);
   #endif

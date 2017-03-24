@@ -55,7 +55,7 @@
 #define BRTOS_DYNAMIC_TASKS_ENABLED 0
 
 #define WATERMARK					1
-#define COMPUTES_TASK_LOAD			1
+#define COMPUTES_TASK_LOAD			0
 
 extern void OSConfigureTimerForRuntimeStats(void);
 extern unsigned int OSGetTimerForRuntimeStats(void);
