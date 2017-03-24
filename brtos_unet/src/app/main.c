@@ -33,7 +33,7 @@ BRTOS_TH TH_TERMINAL;
 #endif
 
 
-#define LORA_NET  1
+#define LORA_NET  0
 
 /*lint -save  -e970 Disable MISRA rule (6.3) checking. */
 int main_app(void)
@@ -50,7 +50,7 @@ int main_app(void)
   // Initialize BRTOS
   BRTOS_Init();
 
-  #if (PROCESSOR == ARM_Cortex_M0)
+  #if (BRTOS_PLATFORM == FRDM_KL25Z)
   	  // Iniciar UART para utilizar com printf
   	  Init_UART0(115200,128);
   #endif

@@ -8,9 +8,9 @@
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-#define FRDM_KL25Z				0
-#define BOARD_FRDM_KL25Z		0
-#define BOARD_ROTEADORCFV1		1
+#define FRDM_KL25Z				1
+#define BOARD_FRDM_KL25Z		1
+#define BOARD_ROTEADORCFV1		2
 
 #define BRTOS_PLATFORM 			FRDM_KL25Z
 
