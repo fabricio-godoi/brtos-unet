@@ -269,10 +269,14 @@ TIMER_CNT neighbourhood_callback(void)
 /** UNET Network Timeout Function */
 #if NETWORK_ENABLE == 1
 
+volatile uint32_t StatTimer = 0;
+
 void BRTOS_TimerHook(void)
 {   
 
-    IncDepthWatchdog();    
+#ifdef IncDepthWatchdog
+    IncDepthWatchdog();
+#endif
     
     // update throughput stats every one sec
     // keep average of last 8 sec.

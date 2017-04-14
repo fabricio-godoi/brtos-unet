@@ -54,23 +54,16 @@
 #define ESP8266_AT_H_
 
 #include "AppConfig.h"
+#include "../modem.h"
 #include "OS_types.h"
 #include "UART.h"
-
-#if COLDUINO
-#include "virtual_com.h"
-#endif
-#include "terminal_io.h"
+#include "terminal.h"
 
 // configuration
-#if COLDUINO
-#define ESP_ENABLE 1
-#else
-#define ESP_ENABLE 0
-#endif
+#define ESP_ENABLE 			0
 
-#define ESP_BAUD 9600
-#define ESP_UART 2
+#define ESP_BAUD 			9600
+#define ESP_UART 			2
 #define ESP_TCP_PORT		80
 #define ESP_TCP_LOCAL_PORT	10201
 #define ESP_TCP_CTX_NUM		0
@@ -86,7 +79,7 @@
 
 #if ESP_ENABLE
 
-/* define esp uart functions*/
+/* define esp uart functions */
 #if ESP_UART == 1 
 	#if ENABLE_UART1 == FALSE
 		#error "UART 1 is disabled"
@@ -133,7 +126,7 @@
 #endif
 #endif
 
-#include "modem.h"
+#include "../modem.h"
 
 typedef state_t	esp_state_t;
 
@@ -152,7 +145,7 @@ typedef enum
  * AT+CIPSTAMAC?
  * AT+CIPCREATE="TCP",10201,2048
  * AT+CIPCONNECT=0,"54.160.189.224",80
- * AT+CIPSENDI=0,"GET /input/post.json?json={power:150}&API_KEY HTTP/1.1\r\nHost: emon-gpsnetcms.rhcloud.com\r\n\r\n"
+ * AT+CIPSENDI=0,"GET /input/post.json?json={power:150}&API_KEY HTTP/1.1\r\nHost: ...\r\n\r\n"
  * AT+CIPRD=0
  * AT+CIPCLOSE=0
  *  

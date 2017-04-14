@@ -33,8 +33,6 @@ BRTOS_TH TH_TERMINAL;
 #endif
 
 
-#define LORA_NET  0
-
 /*lint -save  -e970 Disable MISRA rule (6.3) checking. */
 int main_app(void)
 /*lint -restore Enable MISRA rule (6.3) checking. */
@@ -65,8 +63,8 @@ int main_app(void)
 #if(NETWORK_ENABLE == 1)
   UNET_Init();      /* Install uNET tasks: Radio, Link, Ack Up/Down, Router Up/Down */
 
-#if (PROCESSOR == ARM_Cortex_M0)
-#if (UNET_DEVICE_TYPE == PAN_COORDINATOR) && 1
+#if (BRTOS_PLATFORM == FRDM_KL25Z)
+#if (UNET_DEVICE_TYPE == PAN_COORDINATOR) && 0
   if(InstallTask(&pisca_led_net,"Blink LED Example",UNET_App_StackSize,APP2_Priority, NULL, &TH_NET_APP2) != OK)
   {
     while(1){};
@@ -81,7 +79,7 @@ int main_app(void)
 #endif
 
 #if (UNET_DEVICE_TYPE == PAN_COORDINATOR)
-  #define TERM_PRIORITY Terminal_Priority
+	#define TERM_PRIORITY Terminal_Priority
 #else
 	#define TERM_PRIORITY APP3_Priority
 #endif

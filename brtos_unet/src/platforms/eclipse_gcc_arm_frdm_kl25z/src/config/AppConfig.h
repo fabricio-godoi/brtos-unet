@@ -8,6 +8,8 @@
 #define RelayControl_Task_Priority    (INT8U)28
 #define EnergyMetering_Task_Priority  (INT8U)2
 
+#define LORA_NET  	  0
+#define TERM_ENABLE   1
 /****************************************************************/
 /* TASKS STACK SIZE ASSIGNMENT                                  */
 #if !SIMULATOR

@@ -124,8 +124,7 @@ u1_t hal_spi (u1_t out) {
 
 static clock_t  ticks;
 
-
-#if !NETWORK_ENABLE
+#if !NETWORK_ENABLE && LORA_NET
 void BRTOS_TimerHook(void)
 {
 	ticks++;

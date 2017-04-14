@@ -4,7 +4,7 @@
 #include "BRTOS.h"
 
 /// Define network support           
-#define NETWORK_ENABLE                      0
+#define NETWORK_ENABLE                      1
 #define RUN_TESTS							FALSE
 #define EXPERIMENTAL						0
 #define DEBUG_PRINTF						1

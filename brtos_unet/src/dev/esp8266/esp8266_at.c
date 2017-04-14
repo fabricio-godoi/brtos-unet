@@ -28,17 +28,16 @@
  *      Author: Carlos H. Barriquello
  */
 
-
-#include "esp8266_at.h"
 #include "BRTOS.h"
-#include "terminal_io.h"
-#include "terminal_commands.h"
-#include "virtual_com.h"
+#include "esp8266_at.h"
+#include "terminal.h"
 #include "utils.h"
 
-static esp_state_t esp_state = INIT;
+static esp_state_t esp_state = MODEM_INIT;
 static char ip[16];
 static char* hostname = NULL;
+
+#define putcharSer(a,b)
 
 static void at_esp_print_reply(void)
 {
@@ -91,23 +90,28 @@ INT8U esp_get_ip(void)
 
 CHAR8 at_esp_getchar(void)
 {
-	INT8U caracter;
+	INT8U caracter = (-1);
+
+#if ESP_ENABLE
 	if(OSQueuePend(ESP_QUEUE, &caracter, ESP_UART_TIMEOUT) == TIMEOUT)
 	{
 		return (CHAR8) (-1);
 	}	
+#endif
+
 	return (CHAR8)caracter;
 }
 
 esp_ret_t at_esp_init(void)
 {
 	
-	if(esp_state != INIT)
+	if(esp_state != MODEM_INIT)
 	{
 		return ESP_STATE_ERR;
 	}
 	
 	/* init ESP_UART */
+#if ESP_ENABLE
 	uart_init(ESP_UART,ESP_BAUD,ESP_UART_BUFSIZE,ESP_MUTEX,ESP_MUTEX_PRIO);
 	
 	/* check init */
@@ -129,13 +133,15 @@ esp_ret_t at_esp_init(void)
 	esp_release();	
 	printSer(USE_USB,"\r\n");
 	
-	esp_state = CLOSE;
+#endif
+
+	esp_state = MODEM_CLOSE;
 	return ESP_OK;
 	
 }
 esp_ret_t at_esp_open(void)
 {
-	if(esp_state != CLOSE)
+	if(esp_state != MODEM_CLOSE)
 	{
 		return ESP_STATE_ERR;
 	}
@@ -165,7 +171,7 @@ esp_ret_t at_esp_open(void)
 	esp_release();			
 	printSer(USE_USB,"\r\n");
 	
-	esp_state = OPEN;
+	esp_state = MODEM_OPEN;
 	
 	return ESP_OK;
 }
@@ -173,7 +179,7 @@ esp_ret_t at_esp_open(void)
 esp_ret_t at_esp_send(INT8U* dados)
 {
 		
-	if(esp_state != OPEN)
+	if(esp_state != MODEM_OPEN)
 	{
 		return ESP_STATE_ERR;
 	}
@@ -204,7 +210,7 @@ esp_ret_t at_esp_send(INT8U* dados)
 esp_ret_t at_esp_receive(CHAR8* buff, INT8U* len)
 {
 
-	if(esp_state != OPEN)
+	if(esp_state != MODEM_OPEN)
 	{
 		return ESP_STATE_ERR;
 	}
@@ -222,7 +228,7 @@ esp_ret_t at_esp_receive(CHAR8* buff, INT8U* len)
 
 esp_ret_t at_esp_close(void)
 {
-	if(esp_state != OPEN)
+	if(esp_state != MODEM_OPEN)
 	{
 		return ESP_STATE_ERR;
 	}
@@ -235,7 +241,7 @@ esp_ret_t at_esp_close(void)
 	esp_release();		
 	printSer(USE_USB,"\r\n");
 		
-	esp_state = CLOSE;
+	esp_state = MODEM_CLOSE;
 	return ESP_OK;
 }
 
