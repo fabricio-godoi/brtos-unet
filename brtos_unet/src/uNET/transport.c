@@ -79,15 +79,13 @@ int unet_close(unet_transport_t *server_client){
 }
 
 int unet_recv(unet_transport_t *server_client, uint8_t *buffer, uint16_t timeout){
-	if (OSSemPend(server_client->wake_up,timeout) != TIMEOUT)
+	int ret;
+	
+	if ((ret = OSSemPend(server_client->wake_up,timeout)) == OK)
 	{
 		memcpy(buffer,server_client->packet,server_client->payload_size);
-		//memset(server_client->packet,0x00,server_client->payload_size);
-		return 0;
-	}else
-	{
-		return -1;
 	}
+	return ret;
 }
 
 volatile ostick_t last_transmition_time = 0;
