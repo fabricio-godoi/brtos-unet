@@ -104,7 +104,12 @@ void UNET_Router_Up_Task(void* p);
 void UNET_test(void *param);
 #endif
 
-#define UNET_RADIO_STACKSIZE   (UNET_DEFAULT_STACKSIZE) + 64
+#ifndef UNET_STACKS
+#define UNET_RADIO_STACKSIZE   (UNET_DEFAULT_STACKSIZE)
+#define UNET_LINK_STACKSIZE    (UNET_DEFAULT_STACKSIZE)
+#define UNET_ACK_STACKSIZE     (UNET_DEFAULT_STACKSIZE)
+#define UNET_ROUTER_STACKSIZE  (UNET_DEFAULT_STACKSIZE)
+#endif
 
 #define UNET_Radio_Task_Priority     10
 #define UNET_Link_Task_Priority      9
@@ -212,19 +217,19 @@ void UNET_Init(void)
  assert(OSInstallTask(&UNET_Radio_Task,"Radio Handler",UNET_RADIO_STACKSIZE,
 		 UNET_Radio_Task_Priority, NULL, &TH_RADIO)== OK);
 
- assert(OSInstallTask(&UNET_Link_Task,"Link packet TX Task",UNET_DEFAULT_STACKSIZE,
+ assert(OSInstallTask(&UNET_Link_Task,"Link packet TX Task",UNET_LINK_STACKSIZE,
 		 UNET_Link_Task_Priority, NULL, NULL)== OK);
 
- assert(OSInstallTask(&UNET_Router_Down_Ack_Task,"Router down ack TX Task",UNET_DEFAULT_STACKSIZE,
+ assert(OSInstallTask(&UNET_Router_Down_Ack_Task,"Router down ack TX Task",UNET_ACK_STACKSIZE,
 		 UNET_Router_Down_Ack_Task_Priority, NULL, NULL)== OK);
 
- assert(OSInstallTask(&UNET_Router_Down_Task,"Router down TX Task",UNET_DEFAULT_STACKSIZE,
+ assert(OSInstallTask(&UNET_Router_Down_Task,"Router down TX Task",UNET_ROUTER_STACKSIZE,
 		 UNET_Router_Down_Task_Priority, NULL, NULL)== OK);
 
- assert(OSInstallTask(&UNET_Router_Up_Ack_Task,"Router up ack TX Task",UNET_DEFAULT_STACKSIZE,
+ assert(OSInstallTask(&UNET_Router_Up_Ack_Task,"Router up ack TX Task",UNET_ACK_STACKSIZE,
 		 UNET_Router_Up_Ack_Task_Priority, NULL, NULL)== OK);
 
- assert(OSInstallTask(&UNET_Router_Up_Task,"Router up TX Task",UNET_DEFAULT_STACKSIZE,
+ assert(OSInstallTask(&UNET_Router_Up_Task,"Router up TX Task",UNET_ROUTER_STACKSIZE,
 		 UNET_Router_Up_Task_Priority, NULL, NULL)== OK);
 
 #if (RUN_TESTS == TRUE)
