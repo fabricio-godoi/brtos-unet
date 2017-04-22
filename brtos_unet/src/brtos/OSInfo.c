@@ -66,6 +66,14 @@ char *PrintDecimal(int16_t val, CHAR8 *buff)
 
 // Imprimir ID, nome, estado, prioridade, stack
 /* Tasks are reported as blocked ('B'), ready ('R') or suspended ('S'). */
+#define NO_BUFFERED 1
+#if NO_BUFFERED == 1
+#ifndef TERM_PRINT
+#include "printf_lib.h"
+#define TERM_PRINT(...) printf_lib(__VA_ARGS__);
+#endif
+#define mem_cpy(buf, s)  TERM_PRINT(s)
+#endif
 void OSTaskList(char *string)
 {
     uint16_t VirtualStack = 0;
@@ -78,6 +86,7 @@ void OSTaskList(char *string)
     uint32_t *sp_end = 0;
     uint32_t *sp_address = 0;
     int z,count;
+    char str2[2];
     
     string += mem_cpy(string,"\n\r***********************************************************\n\r");
     string += mem_cpy(string,"ID   NAME                    STATE   PRIORITY   STACK SIZE\n\r");
@@ -90,10 +99,11 @@ void OSTaskList(char *string)
 	#endif
     {
 		  if (ContextTask[j].Priority != EMPTY_PRIO){
-			  *string++ = '[';
+			  string += mem_cpy(string, "[");
 			  if (j<10)
 			  {
-				  *string++ = j+'0';
+				  str2[0] = j+'0'; str2[1] = '\0';
+				  string += mem_cpy(string, str2);
 				  string += mem_cpy(string, "]  ");
 			  }else
 			  {
@@ -107,19 +117,19 @@ void OSTaskList(char *string)
 			  // Task name align
 			  for(count=0;count<(24-z);count++)
 			  {
-				  *string++ = ' ';
+				  string += mem_cpy(string," ");
 			  }
 
 			  // Print the task state
 			  string += mem_cpy(string,"  ");
 			  UserEnterCritical();
 			  if ((OSBlockedList & (PriorityMask[ContextTask[j].Priority])) == 0){
-				  *string++ = 'B';
+				  string += mem_cpy(string,"B");
 			  }else{
 				  if ((OSReadyList & (PriorityMask[ContextTask[j].Priority])) == PriorityMask[ContextTask[j].Priority]){
-					  *string++ = 'R';
+					  string += mem_cpy(string,"R");
 				  }else{
-					  *string++ = 'S';
+					  string += mem_cpy(string,"S");
 				  }
 			  }
 			  UserExitCritical();
@@ -156,11 +166,16 @@ void OSTaskList(char *string)
 
 			  // Find for at least 16 available sp data into task stack
 			  #ifdef WATERMARK
+
+			  #ifndef WATERMARK_CONF
+				#define WATERMARK_CONF 0x24242424
+			  #endif
+
 			  sp_address = sp_end;
 			  sp_address++;
 			  do
 			  {
-				  if (*sp_address != 0x24242424)
+				  if (*sp_address != WATERMARK_CONF)
 				  {
 					  break;
 				  }
@@ -238,9 +253,10 @@ void OSRuntimeStats(char *string)
 	#endif
     {
 		  if (ContextTask[j].Priority != EMPTY_PRIO){
-			  *string++ = '[';
+			  string += mem_cpy(string, "[");
 			  if (j<10){
-				  *string++ = j+'0';
+				  str[0] = j+'0'; str[1] = '\0';
+				  string += mem_cpy(string, str);
 				  string += mem_cpy(string, "]  ");
 			  }else{
 				  (void)PrintDecimal(j, str);
@@ -252,7 +268,7 @@ void OSRuntimeStats(char *string)
 
 			  // Task name align
 			  for(count=0;count<(24-z);count++){
-				  *string++ = ' ';
+				  string += mem_cpy(string, " ");
 			  }
 
 			  // Print the task priority
@@ -268,7 +284,7 @@ void OSRuntimeStats(char *string)
 			  string +=z;
 			  // Align
 			  for(count=0;count<(12-z);count++){
-				  *string++ = ' ';
+				  string += mem_cpy(string, " ");
 			  }
 
 			  if( percentage > 0UL ){
@@ -389,9 +405,10 @@ void OSCPULoad(char *string)
     uint32_t percent = 0;
     uint8_t caracter = 0;
     uint8_t cent,dez;
+    char  str[6], *strp = str;
 
     UserEnterCritical();
-    percent = LastOSDuty;
+    	percent = LastOSDuty;
     UserExitCritical();
 
     string += mem_cpy(string, "\n\rCPU LOAD: ");
@@ -405,15 +422,18 @@ void OSCPULoad(char *string)
         cent = (percent/100);
         caracter = cent + 48;
         if(caracter != 48)
-          *string++ = caracter;
+        	*strp++ = caracter;
         dez = ((percent - cent*100)/10);
         caracter = dez + 48;
-        *string++ = caracter;
-        *string++ = '.';
+        *strp++ = caracter;
+        *strp++ = '.';
         caracter = (percent%10) + 48;
-        *string++ = caracter;
-        *string++ = '%';
+        *strp++ = caracter;
+        *strp++ = '%';
+        *strp++ = '\0';
+        string += mem_cpy(string, str);
     }
+
     string += mem_cpy(string, "\n\r");
 
     // End of string
