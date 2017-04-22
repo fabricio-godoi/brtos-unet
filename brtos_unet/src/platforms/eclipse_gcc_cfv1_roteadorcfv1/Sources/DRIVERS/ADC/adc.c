@@ -27,7 +27,7 @@ Copyright (c) <2009-2013> <Universidade Federal de Santa Maria>
 
 
 /* for bandgap reference */
-#define BANDGAP_ITERATIONS       10
+#define BANDGAP_ITERATIONS       6
 #define BANDGAP_CHAN             (INT8U)27
 static INT16U                    BandGap = 0; 
 
@@ -102,7 +102,7 @@ INT16U ADC_Conversion(INT8U chan)
 {
   word return_ad = 0;
   ADCSC1 = (INT8U)(chan);    /* Inicia a medida de um canal */
-  while(!ADCSC1_COCO){};  
+  while(!(ADCSC1 & ADCSC1_COCO_MASK)){};
   return_ad = ADCR;
   ADCSC1 = 0x1F;
   return return_ad;
@@ -115,12 +115,16 @@ INT8U ADC_Bandgap_Set(void){
   INT32U j=0;
   OS_SR_SAVE_VAR;
   
+  uint16_t value = 0;
+
   /* Take average of bandgap channel */
   for(j=0;j<(1<<BANDGAP_ITERATIONS);j++)
   {
     OSEnterCritical();
-      bandgap += (INT16U)ADC_Conversion(BANDGAP_CHAN);
-    OSExitCritical();    
+      value = ADC_Conversion(BANDGAP_CHAN);
+    OSExitCritical();
+    bandgap += (INT32U)value;
+    OSDelayTask(10);
   }
   bandgap = (bandgap >> BANDGAP_ITERATIONS);
   

@@ -55,16 +55,9 @@ int main(void)
 
 #if PROCESSOR == COLDFIRE_V1
 	System_Init();
-#if 0
-	ISR_STACK[0]= 0x49535253;
-	ISR_STACK[1]= 0x5441434B;
-	ISR_STACK[ISR_STACK_SIZE-1]= 0x49535253;
-	ISR_STACK[ISR_STACK_SIZE-2]= 0x5441434B;
-#else
 	#include "string.h"
 	strcpy((char*)&ISR_STACK[0],"ISRSTACK");
 	strcpy((char*)&ISR_STACK[ISR_STACK_SIZE-2],"ISRSTACK");
-#endif
 #endif
 
 	main_app();

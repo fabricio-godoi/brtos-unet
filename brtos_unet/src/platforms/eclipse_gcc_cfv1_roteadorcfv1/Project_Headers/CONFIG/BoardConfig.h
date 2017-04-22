@@ -19,6 +19,7 @@
 #include "../uNET/radio/mrf24j40.h"
 #if (__GNUC__)
 #define Int_TPM1_Ch1_Handler 		Radio_Interrupt
+#define Int_TPM2_Ovf_Handler 		ADC_Tick
 //#define TX_POWER_INIT_VALUE 	MRF24J40_TX_PWR_SET(MRF24J40_PWR_H_MINUS_30dB,MRF24J40_PWR_L_MINUS_0_5dB)
 #endif
 
@@ -26,8 +27,6 @@
 /* */
 #endif
 
-
-#define UNET_DEFAULT_STACKSIZE  		(256+64+16)
 
 /******************************************************************/
 /* ADC channels for voltage, current, temperature, light          */

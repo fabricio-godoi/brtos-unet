@@ -33,9 +33,11 @@
 #include "drivers/adc/adc.h"
 #include "drivers/pwm/pwm.h"
 #include "drivers/flash/flash.h"
+#include "drivers/flash_eeprom/fl_eeprom.h"
 #include "drivers/gpio/gpio.h"
 #include "drivers/led_onboard.h"
 #include "drivers/mcu_driver.h"
+
 //#include "disk.h"
 //#include "lcd.h"
 //#include "sound_driver.h"

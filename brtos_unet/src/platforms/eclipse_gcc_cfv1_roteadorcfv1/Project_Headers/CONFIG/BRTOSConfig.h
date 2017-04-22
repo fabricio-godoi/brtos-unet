@@ -7,7 +7,7 @@
 /////                                                     /////
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
-#define BOARD_ROTEADORCFV1			3
+#define BOARD_ROTEADORCFV1		3
 #define BRTOS_PLATFORM 			BOARD_ROTEADORCFV1
 
 /// Define MCU endianess
@@ -32,6 +32,10 @@
 /// Define if compute cpu load is active
 #define COMPUTES_CPU_LOAD 		1
 #define COMPUTES_TASK_LOAD      1
+
+/// Define if uses watermark
+#define WATERMARK				1
+#define WATERMARK_CONF          0x12121212
 
 // The Nesting define must be set in the file HAL.h
 // Example:
@@ -84,6 +88,7 @@
 
 /// Enable or disable timers service
 #define BRTOS_TMR_EN           1
+#define BRTOS_MAX_TIMER		   2
 
 /// Enable or disable binary semaphore controls
 #define BRTOS_BINARY_SEM_EN	   0
@@ -117,11 +122,13 @@
 #define OSRTCEN                     0
 
 // Stack Size of the Idle Task
-#define IDLE_STACK_SIZE             (192)
+#define IDLE_STACK_SIZE             (176)
 #define SYSTEM_TIME_STACK_SIZE		(144)
 
 /// Stack Defines
-#define HEAP_SIZE 				(IDLE_STACK_SIZE+SYSTEM_TIME_STACK_SIZE+256*12+128)
+#define HEAP_MEMBLOCKSIZE		64
+#define HEAP_MEMBLOCKNUM		50
+#define HEAP_SIZE 				(IDLE_STACK_SIZE+SYSTEM_TIME_STACK_SIZE+HEAP_MEMBLOCKNUM*HEAP_MEMBLOCKSIZE)
 
 // Queue heap defines
 #define QUEUE_HEAP_SIZE 		1

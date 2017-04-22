@@ -2,6 +2,9 @@
 #define APP_CONFIG_H
 
 
+#define TERM_ENABLE  			1
+#define SMART_METER_ENABLE		1
+
 /****************************************************************/
 /* TASKS PRIORITY ASSIGNMENT                                    */
 #define SystemTaskPriority            (INT8U)30
@@ -10,14 +13,21 @@
 
 /****************************************************************/
 /* TASKS STACK SIZE ASSIGNMENT                                  */
-#define Timers_StackSize			  (128 + 64)
-#define System_Time_StackSize         (128 + 64)
-#define RelayControl_StackSize        (352)
-#define EnergyMetering_StackSize      (288)
-#define UNET_App_StackSize            (256)//(352 + 384)
-#define UNET_SensorsApp_StackSize     (288)
+#define Timers_StackSize			  (128 + 16)
+#define System_Time_StackSize         (128 + 16)
+#define RelayControl_StackSize         0 //(352)
+#define EnergyMetering_StackSize       (192+64) //(288)
+#define UNET_App_StackSize             0 //(256) //(352 + 384)
+#define UNET_SensorsApp_StackSize      0 	//(288)
 #define Terminal_StackSize		   	  (384+256)
 // #define Bootloader_Task_StackSize - see define below
+
+#define TASKS_STACK_SIZE  (Timers_StackSize+System_Time_StackSize+RelayControl_StackSize+ \
+		EnergyMetering_StackSize+UNET_App_StackSize+UNET_SensorsApp_StackSize+Terminal_StackSize)
+
+#if ((TASKS_STACK_SIZE) - (HEAP_SIZE - IDLE_STACK_SIZE)) > 0
+#pragma message("stack size overflow")
+#endif
 
 /****************************************************************/
 /** SMART METER APP CONFIG                                      */
