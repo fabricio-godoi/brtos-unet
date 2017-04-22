@@ -35,7 +35,9 @@ void terminal_test(void);
 #define CMD_FUNC(x)              char *cmd_##x(int argc, char ** argv)
 #define CMD_UNUSED_ARG()        (void)argc;(void)argv;
 
+#include "AppConfig.h"
 #include "terminal_cfg.h"
+
 
 #define EXPAND_AS_COMMAND_CODE_ENUM(a,c)    enum_##a,
 #define EXPAND_AS_STRUCT(a,b)               char a;

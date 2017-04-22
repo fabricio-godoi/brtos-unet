@@ -13,6 +13,7 @@
 /* Must be listed in alphabetical order !!!! */
 
 /*  ------ NAME ------- HELP --- */
+#ifndef COMMAND_TABLE
 #define COMMAND_TABLE(ENTRY) \
 ENTRY(help,"Help Command")     \
 ENTRY(netaddr, "Show net role, addr16, addr64") \
@@ -29,6 +30,7 @@ ENTRY(nettx,"Tx a packet") \
 ENTRY(runst,"Running stats")	\
 ENTRY(top,"System info")    \
 ENTRY(ver,"System version")
+#endif
 
 #define HELP_DESCRIPTION         1
 
