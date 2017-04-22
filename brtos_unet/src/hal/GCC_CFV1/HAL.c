@@ -238,7 +238,14 @@ void SwitchContext(void)
 #else
   void CreateVirtualStack(void(*FctPtr)(void), INT16U NUMBER_OF_STACKED_BYTES)
 #endif
-{  
+{
+
+#ifdef WATERMARK
+	OS_CPU_TYPE *temp_stk_pt = (OS_CPU_TYPE*)&STACK[iStackAddress];
+
+//	*temp_stk_pt++ = (INT32U)(((NumberOfInstalledTasks + '0') << 24) + 'T' + ('S' << 8) + ('K' << 16));
+#endif
+
    OS_CPU_TYPE *stk_pt = (OS_CPU_TYPE*)&STACK[iStackAddress + (NUMBER_OF_STACKED_BYTES / sizeof(OS_CPU_TYPE))];
    //INT32U *stk_pt = (INT32U*)&STACK[iStackAddress + NUMBER_OF_STACKED_BYTES];
    
@@ -263,10 +270,10 @@ void SwitchContext(void)
 		   
    *--stk_pt = (INT32U)0x40802000;
    
-   #if (NESTING_INT == 1)  
-   
-   // Initialize registers   
+   // Initialize registers
+#if (NESTING_INT == 1)
    *--stk_pt = (INT32U)0x00;    // Save Int level
+#endif
    
    *--stk_pt = (INT32U)0xA1;
 
@@ -291,35 +298,17 @@ void SwitchContext(void)
    *--stk_pt = (INT32U)0xD5;   
    *--stk_pt = (INT32U)0xD4;   
    *--stk_pt = (INT32U)0xD3;               
-   
-   #else
-   
-   // Initialize registers
-   *--stk_pt = (INT32U)0xA1;
-   
-#if (TASK_WITH_PARAMETERS == 1)   
-   *--stk_pt = (INT32U)parameters;
-#else
-   *--stk_pt = (INT32U)0xA0;
-#endif
-   
-   *--stk_pt = (INT32U)0xD2;
-   *--stk_pt = (INT32U)0xD1;
-   *--stk_pt = (INT32U)0xD0;
-   
-   *--stk_pt = (INT32U)0xA6;
-   *--stk_pt = (INT32U)0xA5;
-   *--stk_pt = (INT32U)0xA4;
-   *--stk_pt = (INT32U)0xA3;
-   *--stk_pt = (INT32U)0xA2;
-   
-   *--stk_pt = (INT32U)0xD7;   
-   *--stk_pt = (INT32U)0xD6;   
-   *--stk_pt = (INT32U)0xD5;   
-   *--stk_pt = (INT32U)0xD4;   
-   *--stk_pt = (INT32U)0xD3;
-   
-   #endif
+
+	#ifdef WATERMARK
+	#ifndef WATERMARK_CONF
+		#define WATERMARK_CONF 0x24242424
+	#endif
+
+	do{
+		*--stk_pt = WATERMARK_CONF;
+	}while (stk_pt > temp_stk_pt);
+	#endif
+
 }
 
 
