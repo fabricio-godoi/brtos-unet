@@ -231,8 +231,12 @@ __attribute__ ((naked)) void SwitchContextToFirstTask(void)
     *--stk_pt = (INT32U)0x08080808u;                        /* R8                                                     */
     
 	#ifdef WATERMARK
+	#ifndef WATERMARK_CONF
+		#define WATERMARK_CONF 0x24242424
+	#endif
+
 	do{
-		*--stk_pt = 0x24242424;
+		*--stk_pt = WATERMARK_CONF;
 	}while (stk_pt > temp_stk_pt);    
 	#endif
 }
