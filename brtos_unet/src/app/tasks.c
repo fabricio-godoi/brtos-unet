@@ -448,6 +448,7 @@ char unet_putchar(char c)
 {
 
 	term_buffer[term_buffer_size++%MAX_APP_PAYLOAD_SIZE] = c;
+
 	if(term_buffer_size == MAX_APP_PAYLOAD_SIZE || c == ETX)
 	{
 		if(server_putchar != NULL)
@@ -506,6 +507,9 @@ void Terminal_Task(void *p)
 				printf_install_putchar(NULL);
 				break;
 #endif
+
+				if(ret == NULL) break;
+
 				uint8_t	*packet = ret;
 			    size = 0;
 			    idx = 0;

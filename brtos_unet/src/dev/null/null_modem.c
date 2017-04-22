@@ -153,7 +153,7 @@ uint8_t null_modem_receive(char* buff, uint16_t* len)
 	{		
 			if(null_modem_Buffer[0] != '\0')
 			{
-				strcpy_P(null_modem_Buffer, PSTR("HTTP/1.1 200 OK\r\n"));
+				strcpy(null_modem_Buffer, "HTTP/1.1 200 OK\r\n");
 				ret = MODEM_OK;
 				memcpy(buff,null_modem_Buffer,size);
 				null_modem_Buffer[0] = '\0';

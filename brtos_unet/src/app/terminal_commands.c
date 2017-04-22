@@ -63,6 +63,11 @@ char* packet_state_to_string(uint8_t state)
 
 #if (UNET_DEVICE_TYPE == PAN_COORDINATOR) || BRTOS_PLATFORM == BOARD_ROTEADORCFV1
 
+#if (UNET_DEVICE_TYPE == PAN_COORDINATOR)
+#define BIGBUFFER_SIZE 1024
+#else
+#define BIGBUFFER_SIZE 1
+#endif
 // BRTOS version Command
 CMD_FUNC(ver)
 {
@@ -73,24 +78,47 @@ CMD_FUNC(ver)
 
 // TOP Command (similar to the linux command)
 #include "OSInfo.h"
-char big_buffer[1024];
+char big_buffer[BIGBUFFER_SIZE];
+
 CMD_FUNC(top)
 {
-  OSCPULoad(big_buffer);
-  printf_terminal(big_buffer);
 
-  OSUptimeInfo(big_buffer);
-  printf_terminal(big_buffer);
+#if BRTOS_PLATFORM == BOARD_ROTEADORCFV1
 
-  OSAvailableMemory(big_buffer);
-  printf_terminal(big_buffer);
+  	OSCPULoad(big_buffer);
+  	OSUptimeInfo(big_buffer);
+	OSAvailableMemory(big_buffer);
+	OSTaskList(big_buffer);
 
-  OSTaskList(big_buffer);
-  printf_terminal(big_buffer);
+#else
+  	OSCPULoad(big_buffer);
+    printf_terminal(big_buffer);
+
+  	OSUptimeInfo(big_buffer);
+	printf_terminal(big_buffer);
+
+	OSAvailableMemory(big_buffer);
+	printf_terminal(big_buffer);
+
+	OSTaskList(big_buffer);
+	printf_terminal(big_buffer);
+#endif
 
   return NULL;
 }
 
+CMD_FUNC(meter)
+{
+#if BRTOS_PLATFORM == BOARD_ROTEADORCFV1
+		#include "smartmeter.h"
+		SE_STRUCT se;
+		Smartmeter_GetValues(&se);
+		printf_terminal("Meter data:\n\r");
+		printf_terminal("Vrms:     %u\n\r",se.v_rms);
+		printf_terminal("Irms:     %u\n\r",se.i_rms);
+#endif
+	return NULL;
+}
 CMD_FUNC(runst)
 {
 #if (COMPUTES_TASK_LOAD == 1)

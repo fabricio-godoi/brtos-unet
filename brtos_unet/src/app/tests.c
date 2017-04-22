@@ -41,6 +41,7 @@ __attribute__((noreturn))
 __assert_func (const char *file, int line, const char *func,
                const char *failedexpr)
 {
+	(void) file; (void) func; (void) failedexpr;
 	PRINTF("Test failed at line %d\r\n", line);
 	exit(0);
 }

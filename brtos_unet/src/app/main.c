@@ -151,6 +151,22 @@ int main_app(void)
   };
 #endif
 
+
+#if BRTOS_PLATFORM == BOARD_ROTEADORCFV1
+#if SMART_METER_ENABLE == 1
+  #include "smartmeter.h"
+
+  /* Initialize A/D Converter and bandgap reference */
+  ADC_Setup(HighSpeed, ShortSampleTime, 12);
+
+  if(OSInstallTask(&EnergyMetering_Task,"Energy meter Task",EnergyMetering_StackSize,EnergyMetering_Task_Priority,NULL, NULL) != OK)
+  {
+    while(1){};  // Installation error: please check error type.
+                 // Usually BUSY_PRIORITY or NO_MEMORY
+  }
+#endif
+#endif
+
   // Start Task Scheduler
   if(BRTOSStart() != OK)
   {

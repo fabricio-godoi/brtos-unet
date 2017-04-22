@@ -272,108 +272,6 @@ void Decode_SmartEnergy_Profile(void)
 }
 
 
-/**
-* @fn     NetMultiMeasureSE
-* @brief  function to send message for Smart Energy profile
-**/
-#if 0
-INT8U NetMultiMeasureSE(SE_STRUCT *se)
-{
-
-  INT8U i = 0;
-  INT8U j = 0;  
-  INT8U count = 0; 
-  INT8U status = 0;
-  
-  acquireRadio();
-  
-  NWKPayload[j++] = APP_01;
-  NWKPayload[j++] = SMART_ENERGY_PROFILE;
-  NWKPayload[j++] = MULTIPLE_METERING;   
-  
-  //"se" � um ponteiro que contem o endere�o da estrutura SE_ESTRUCTURE          
-  // Descobre o n�mero de medidas a serem enviadas
-  for(i=0;i<8;i++)
-  {
-    if ((se->params.Byte >> i) && 1)
-    {
-      count++;
-    }
-  }
-  
-  NWKPayload[j++] = count;
-  
-  //verifica se o bit voltage da variavel params � 1. Se for envia.  
-  if(se->params.Bits.Voltage)      
-  {
-      //NWKPayload[j++] = VOLTAGE;
-      NWKPayload[j++] = (INT8U)(se->v_rms >> 8);
-      NWKPayload[j++] = (INT8U)(se->v_rms & 0xFF);             
-  }
-  //verifica se o bit current da variavel params � 1. Se for envia     
-  if(se->params.Bits.Current)   
-  {
-      //NWKPayload[j++] = CURRENT;
-      NWKPayload[j++] = (INT8U)(se->i_rms >> 8);
-      NWKPayload[j++] = (INT8U)(se->i_rms & 0xFF);             
-  }
-  
-  
-  if(se->params.Bits.Power_Factor)      
-  {
-      //NWKPayload[j++] = POWER_FACTOR;
-      NWKPayload[j++] = (INT8U)(se->power_factor >> 8);
-      NWKPayload[j++] = (INT8U)(se->power_factor & 0xFF);            
-  }
-  
-  
-  if(se->params.Bits.Apparent_Power)
-  {
-      //NWKPayload[j++] = APPARENT_POWER;
-      NWKPayload[j++] = (INT8U)(se->power_S >> 24);
-      NWKPayload[j++] = (INT8U)((se->power_S & 0xFFFFFF) >> 16);
-      NWKPayload[j++] = (INT8U)((se->power_S & 0xFFFF) >> 8);
-      NWKPayload[j++] = (INT8U)(se->power_S & 0xFF);            
-  }
-  
-  
-  if(se->params.Bits.Reactive_Power)      
-  {
-      //NWKPayload[j++] = REACTIVE_POWER;
-      NWKPayload[j++] = (INT8U)(se->power_Q >> 24);
-      NWKPayload[j++] = (INT8U)((se->power_Q & 0xFFFFFF) >> 16);
-      NWKPayload[j++] = (INT8U)((se->power_Q & 0xFFFF) >> 8);
-      NWKPayload[j++] = (INT8U)(se->power_Q & 0xFF);        
-  }
-      
-  
-  if(se->params.Bits.Active_Power)      
-  {
-      //NWKPayload[j++] = ACTIVE_POWER;
-      NWKPayload[j++] = (INT8U)(se->power_P >> 24);
-      NWKPayload[j++] = (INT8U)((se->power_P & 0xFFFFFF) >> 16);
-      NWKPayload[j++] = (INT8U)((se->power_P & 0xFFFF) >> 8);
-      NWKPayload[j++] = (INT8U)(se->power_P & 0xFF);           
-  }
-  
-  
-  if(se->params.Bits.Energy)
-  {
-      //NWKPayload[j++] = ENERGY;
-      NWKPayload[j++] = (INT8U)(se->energy_meter >> 24);
-      NWKPayload[j++] = (INT8U)((se->energy_meter & 0xFFFFFF) >> 16);
-      NWKPayload[j++] = (INT8U)((se->energy_meter & 0xFFFF) >> 8);
-      NWKPayload[j++] = (INT8U)(se->energy_meter & 0xFF);           
-  }  
-  
-  
-  status = DownRoute(START_ROUTE,(INT8U)(j));  
-  
-  releaseRadio(); 
-  
-  return status;
-}
-#endif
 
 
 /**
@@ -675,6 +573,9 @@ void Reason_of_Reset(void)
   }
 }
 
+#endif
+
+
 static FAIL_T fail = NO_FAIL;
 
 void ReportFailure_Get(FAIL_T *failure_kind){
@@ -686,4 +587,4 @@ void ReportFailure_Set(FAIL_T failure_kind){
 }
 
 
-#endif
+
