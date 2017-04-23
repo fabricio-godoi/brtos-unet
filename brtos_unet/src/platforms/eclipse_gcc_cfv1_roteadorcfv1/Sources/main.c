@@ -60,6 +60,12 @@ int main(void)
 	strcpy((char*)&ISR_STACK[ISR_STACK_SIZE-2],"ISRSTACK");
 #endif
 
+	#include "math_utils.h"
+	if(square_root_test() > 0)
+	{
+		while(1){}
+	}
+
 	main_app();
 
 	for (;;)

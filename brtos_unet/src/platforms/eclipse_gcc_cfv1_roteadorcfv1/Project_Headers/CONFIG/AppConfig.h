@@ -42,7 +42,7 @@
 #define   CALIB_VALUE            945
 
 /* Sofware/app testing */
-#define   SMARTMETER_TEST_CALCULATIONS      0
+#define   SMARTMETER_TEST_CALCULATIONS      1
 
 /*****************************************************************/
 /** RELAY CONTROL APP CONFIG                                    */

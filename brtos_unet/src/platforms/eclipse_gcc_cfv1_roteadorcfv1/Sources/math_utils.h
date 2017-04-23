@@ -29,3 +29,5 @@ Copyright (c) <2009-2013> <Universidade Federal de Santa Maria>
 INT16U  SquareRoot(INT32U A);
 INT32U  Absolute(INT32S x);
 INT32U  Positive(INT32S x);
+
+int square_root_test(void);

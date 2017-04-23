@@ -44,7 +44,20 @@ Copyright (c) <2009-2013> <Universidade Federal de Santa Maria>
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Energy meter vars */
-#define SMARTMETER_BUFFSIZE 64  //128
+#define SMARTMETER_BUFFSIZE_EXP		7
+#define SMARTMETER_BUFFSIZE 		(1<<SMARTMETER_BUFFSIZE_EXP)
+
+#if (defined SMARTMETER_TEST_CALCULATIONS &&  SMARTMETER_TEST_CALCULATIONS == 1)
+#define SUBSAMPLE_FACTOR 		 (256/SMARTMETER_BUFFSIZE)
+#define FULL_CYCLE_SAMPLE_EXP	 (SMARTMETER_BUFFSIZE_EXP)
+#define FULL_CYCLE_SAMPLE_NUM    (1<<FULL_CYCLE_SAMPLE_EXP)
+#define SCALE_FACTOR_V           2
+#define SCALE_FACTOR_I           20
+#else
+#define FULL_CYCLE_SAMPLE_EXP	 (7)
+#define FULL_CYCLE_SAMPLE_NUM    (1<<FULL_CYCLE_SAMPLE_EXP)
+#endif
+
 static INT16U corrente1[SMARTMETER_BUFFSIZE];
 static INT16U corrente2[SMARTMETER_BUFFSIZE];
 static INT16U tensao1[SMARTMETER_BUFFSIZE];
@@ -62,13 +75,13 @@ const     INT32U  Energy_Meter_Reg = 0;
 /* Calibration factor for current sensor */
 const     INT32S  CurrentFactor  = 0xFFFFFFFF;
 
-static    SE_STRUCT      SmartEnergyValues = {0};
+static    SE_STRUCT      SmartEnergyValues = {};
 static    INT32U         EnergyMeter     = 0;
 static    INT8U          buffer_counter  = 0;
 static    INT8U          buffer_counter_v  = 0;
 static    INT8U          buffer_counter_i  = 0;
 static    INT8U          SmartMeterState = SMARTMETER_OFF;  
-static    uint8_t 		 samples_cnt = 0;
+static    uint16_t 		 samples_cnt = 0;
 
 // Event signal for power/energy processing
 BRTOS_Sem    *Do_Calculation;
@@ -81,8 +94,6 @@ BRTOS_Sem    *Do_Calculation;
 #define CURRENT_METER  1
 #define POWER_METER    0
 #define START_AUTO     1
-
-#define FULL_CYCLE_SAMPLE_NUM    128
 
 void EnergyMetering_Task(void *p)
 {
@@ -241,12 +252,15 @@ void EnergyMetering_Task(void *p)
       {
     	  samples_cnt = 0;
 		  /* RMS voltage - Calculo da tensao RMS, valor com uma casa depois da virgula */
-		  vrms = vrms / FULL_CYCLE_SAMPLE_NUM;
+		  vrms = vrms >> FULL_CYCLE_SAMPLE_EXP;
 		  vrms = SquareRoot((INT32U)vrms);
+
+#if (!defined SMARTMETER_TEST_CALCULATIONS)
 		  vrms = (vrms * BANDGAP_MV * FATOR_TENSAO)/(100*bandgap);
+#endif
 
 		  /* RMS current - Calculo da corrente RMS */
-		  corrente_rms = corrente_rms / FULL_CYCLE_SAMPLE_NUM;
+		  corrente_rms = corrente_rms >> FULL_CYCLE_SAMPLE_EXP;
 		  corrente_rms = SquareRoot((INT32U)corrente_rms);
 
 
@@ -257,7 +271,7 @@ void EnergyMetering_Task(void *p)
 			#endif
 
 		  /* Current sensor calibration - Teste para calibrar sensor (se ainda não calibrado) */
-
+#if (!defined SMARTMETER_TEST_CALCULATIONS)
 		  #if (CALIB_CURRENT == 1)
 		  if (CurrentFactor == 0xFFFFFFFF)
 		  {
@@ -294,6 +308,7 @@ void EnergyMetering_Task(void *p)
 			corrente_rms = (corrente_rms * BANDGAP_MV * CurrentFactor)/(100*bandgap);
 		  }
 		  #endif
+#endif
 
 	#if POWER_METER == 1
 		  /* Apparent power - Calculo da potencia aparente com 3 digitos de precisao */
@@ -417,8 +432,8 @@ void ADC_handler(void)
     OS_SR_SAVE_VAR;
 
 #if (defined SMARTMETER_TEST_CALCULATIONS &&  SMARTMETER_TEST_CALCULATIONS == 1)
-    voltage = (INT16U)((inputsignal1[buffer_counter*2] + (INT16U)(1<<15))>>3);
-    current = (INT16U)((inputsignal2[buffer_counter*2] + (INT16U)(1<<15))>>7);   
+    voltage = (INT16U)((InputVecRMS1[buffer_counter*SUBSAMPLE_FACTOR]*SCALE_FACTOR_V + (INT16U)(2048)));
+    current = (INT16U)((InputVecRMS2[buffer_counter*SUBSAMPLE_FACTOR]*SCALE_FACTOR_I + (INT16U)(2048)));
 #else
     /* take two measurements of voltage and current */   
     OSEnterCritical();

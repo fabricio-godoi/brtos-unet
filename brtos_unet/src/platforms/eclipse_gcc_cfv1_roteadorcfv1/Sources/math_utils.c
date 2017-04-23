@@ -26,9 +26,10 @@ Copyright (c) <2009-2013> <Universidade Federal de Santa Maria>
 
 #include "math_utils.h"
 
-static INT16U        Acc = 0;
+
 //static INT32U        A = 0;
-static INT32U        Acc_temp = 0;
+volatile INT16U        Acc = 0;
+volatile INT32U        Acc_temp = 0;
 
 //--------------------------------------------
 //   return absolute value of a number
@@ -63,12 +64,20 @@ INT32U Positive(INT32S x) {
 //   Output parameter: unsigned 16-bits
 //--------------------------------------------
 /* Root Square Initial Seed */
-static INT32U ASM_FF1(INT32U A)
+INT32U ASM_FF1(INT32U A)
 {
-  __asm__ volatile("ff1.l %d0 \n\t" \
-		  	  	  	  : "=d"   (A)  ); // find the first one
-  A= (32-A)>>1;                // first one index diveded by 2
-  A = (INT32U)1<<A;            // multiplies by two
+	uint32_t v = A;
+
+  __asm__ volatile("ff1.l %0 \n\t" \
+		  	  	   "move.l %0,%1 \n\t" \
+		  	  	   : "=r" (A) \
+				   : "r" (v)); // find the first one
+
+  A = (32-A)>>1;               // first one index divided by 2
+  if(A < 16)
+	  A = ((INT32U)(1)<<A);       // multiplies by two
+  else
+	  A = ((INT32U)(1)<<A)-1;       // multiplies by two
   return(A);                   // Return parameter
 }
 
@@ -80,17 +89,16 @@ static INT32U ASM_FF1(INT32U A)
 //   Output parameter: unsigned 16-bits
 //--------------------------------------------
 /* Square root */
-
 #define MAX_INT 5                                       // maximum number of interactions for square root calculation
                                                         //
 INT16U  SquareRoot(INT32U A)                            //
 {                                                       //
   INT16U j;                                             // local variable 
-  Acc = (INT16U) ASM_FF1(A);                            // initial seed
+  Acc = ASM_FF1(A);                            			// initial seed
   if (Acc == 0)  return 0;                              // skip 0
   for(j=0;j<MAX_INT;j++){                               // execute maximum of MAX_INT interactions
-    Acc_temp = (A/Acc + Acc)/2;                         // Calculate interaction
-    if((Absolute(Acc - Acc_temp) < 0x0001)||(Acc_temp == 0)) // Test if precision is good enough     
+    Acc_temp = (A/Acc + Acc) >> 1;                         // Calculate interaction
+    if((Absolute(Acc - Acc_temp) <= 0x0001)||(Acc_temp == 0)) // Test if precision is good enough
       break;                                            // break if a good precision was reached
     Acc = (INT16U)Acc_temp;                             // Save previous interaction
   }                                                     //
@@ -98,4 +106,19 @@ INT16U  SquareRoot(INT32U A)                            //
   return((INT16U)Acc_temp);                             // Return parameter 
 }
 
-
+int square_root_test(void)
+{
+	uint16_t k = 1;
+	static uint32_t sq = 1;
+	static uint16_t root = 0;
+	for(k=2;k<((1<<16)-2);k++)
+	{
+		sq = k*k;
+		root=SquareRoot(sq);
+		if(Absolute(root - k) > 1)
+		{
+			return k;
+		}
+	}
+	return 0;
+}
