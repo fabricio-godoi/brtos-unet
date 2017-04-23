@@ -77,6 +77,7 @@ char *PrintDecimal(int16_t val, CHAR8 *buff)
 void OSTaskList(char *string)
 {
     uint16_t VirtualStack = 0;
+    uint32_t total_stack_size = 0;
     uint8_t  j = 0;
 #ifndef WATERMARK
     uint8_t  i = 0;
@@ -220,9 +221,14 @@ void OSTaskList(char *string)
 			  string += mem_cpy(string, str);
 
 			  string += mem_cpy(string, "\n\r");
+
+			  total_stack_size += VirtualStack;
 		}
     }
 
+    string += mem_cpy(string, "Total used stack: ");
+    (void)PrintDecimal(total_stack_size, str);
+    string += mem_cpy(string, str);
     string += mem_cpy(string, "\n\r");
 
     // End of string
