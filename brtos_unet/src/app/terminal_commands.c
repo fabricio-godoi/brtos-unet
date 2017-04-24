@@ -114,8 +114,14 @@ CMD_FUNC(meter)
 		SE_STRUCT se;
 		Smartmeter_GetValues(&se);
 		printf_terminal("Meter data:\n\r");
-		printf_terminal("Vrms:     %u\n\r",se.v_rms);
-		printf_terminal("Irms:     %u\n\r",se.i_rms);
+		printf_terminal("V: %u.%u V \n\r",se.v_rms/10,se.v_rms%10);
+		printf_terminal("I: %u mA\n\r",se.i_rms);
+		printf_terminal("P: %u W\n\r",se.power_P);
+		printf_terminal("Q: %u VAr\n\r",se.power_Q);
+		printf_terminal("S: %u VA\n\r",se.power_S);
+		printf_terminal("PF:%u.%u\n\r",se.power_factor/1000,se.power_factor%1000);
+		printf_terminal("E: %u Wh\n\r",se.energy_meter);
+
 #endif
 	return NULL;
 }
