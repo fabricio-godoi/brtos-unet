@@ -1279,6 +1279,11 @@ extern stack_pointer_t StackAddress;
 ////////////////////////////////////////////////////////////
 #if (defined ISR_DEDICATED_STACK && ISR_DEDICATED_STACK == 1)
 
+#if (COMPUTES_TASK_LOAD == 1)
+extern void COMPUTE_TASK_LOAD(void);
+#else
+#define COMPUTE_TASK_LOAD()   (void) currentTask;
+#endif
 ////////////////////////////////////////////////////////////
 #define OS_INT_ENTER() if (!iNesting){OS_SAVE_SP(); OS_RESTORE_ISR_SP(); }; iNesting++;
 
@@ -1289,6 +1294,7 @@ extern stack_pointer_t StackAddress;
 	OS_RESTORE_SP();                                                    \
     SelectedTask = OSSchedule();                                        \
     if (currentTask != SelectedTask){                                   \
+    	COMPUTE_TASK_LOAD();                                             \
         OS_SAVE_CONTEXT();                                              \
         OS_SAVE_SP();                                                   \
         ContextTask[currentTask].StackPoint = SPvalue;                  \

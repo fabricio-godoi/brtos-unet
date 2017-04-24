@@ -237,6 +237,7 @@ ContextType ContextTask[NUMBER_OF_TASKS + 1];          ///< Task context info
 static volatile uint32_t OSTimeTaskSwitched = 0UL;				   	   ///< Value of a counter in the last time a task was switched.
 static volatile uint32_t OSTotalRuntime = 0UL;						   ///< Total amount of execution time
 
+extern uint32_t OSGetTimerForRuntimeStats(void);
 void COMPUTE_TASK_LOAD(void){
 	OSTotalRuntime = OSGetTimerForRuntimeStats();
 	if( OSTotalRuntime > OSTimeTaskSwitched ){

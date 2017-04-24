@@ -86,6 +86,7 @@ void OSTaskList(char *string)
     CHAR8  str[9];
     uint32_t *sp_end = 0;
     uint32_t *sp_address = 0;
+    uint32_t stack_size = 0;
     int z,count;
     char str2[2];
     
@@ -172,6 +173,7 @@ void OSTaskList(char *string)
 				#define WATERMARK_CONF 0x24242424
 			  #endif
 
+			  stack_size = ContextTask[j].StackInit - (uint32_t)sp_end - 4;
 			  sp_address = sp_end;
 			  sp_address++;
 			  do
@@ -218,6 +220,9 @@ void OSTaskList(char *string)
 			  UserExitCritical();
 
 			  (void)PrintDecimal(VirtualStack, str);
+			  string += mem_cpy(string, str);
+			  string += mem_cpy(string, " of");
+			  (void)PrintDecimal(stack_size, str);
 			  string += mem_cpy(string, str);
 
 			  string += mem_cpy(string, "\n\r");
