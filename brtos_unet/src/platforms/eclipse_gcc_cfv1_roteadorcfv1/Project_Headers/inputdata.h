@@ -5,8 +5,8 @@ InputVec1 256 unsigned 32-bit Random numbers with uniform distribution in the ra
 InputVec2 256 unsigned 32-bit Random numbers with uniform distribution in the range of 0 to 2^32 - 1
 InputVec3 256 unsigned 32-bit Sequential incremental numbers from (2^32 - 256) to (2^32 - 1)
 InputVecRMS 256 signed 16-bits 60 Hz, 32767 amplitude, 0 phase sine wave
-InputVecRMS1 256 signed 16-bits 60 Hz, 1000 amplitude, 0 phase sine wave
-InputVecRMS2 256 signed 16-bits 60 Hz, 100 amplitude, 0 phase sine wave
+InputVecRMS1 256 signed 16-bits 60 Hz, 1000 amplitude, 0 phase half sine wave
+InputVecRMS2 256 signed 16-bits 60 Hz, 100 amplitude, 0 phase half sine wave
 InputVecRMS3 256 signed 16-bits 60 Hz, 10 amplitude, 0 phase sine wave
 inputsignal1 256 signed 16-bits 60 Hz, 32767 amplitude, 0 phase sine wave
 inputsignal2 256 signed 16-bits 60 Hz, 32767 amplitude, 45º phase sine wave

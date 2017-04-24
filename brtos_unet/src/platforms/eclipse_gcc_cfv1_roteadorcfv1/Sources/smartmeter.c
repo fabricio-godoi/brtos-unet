@@ -40,6 +40,9 @@ Copyright (c) <2009-2013> <Universidade Federal de Santa Maria>
 
 /* Sanity check */ 
 
+/* Sofware/app testing */
+//#define   SMARTMETER_TEST_CALCULATIONS     1
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,11 +51,13 @@ Copyright (c) <2009-2013> <Universidade Federal de Santa Maria>
 #define SMARTMETER_BUFFSIZE 		(1<<SMARTMETER_BUFFSIZE_EXP)
 
 #if (defined SMARTMETER_TEST_CALCULATIONS &&  SMARTMETER_TEST_CALCULATIONS == 1)
-#define SUBSAMPLE_FACTOR 		 (256/SMARTMETER_BUFFSIZE)
+#define MAX_INPUT_SIZE  		 256
+#define SUBSAMPLE_FACTOR 		 (MAX_INPUT_SIZE/SMARTMETER_BUFFSIZE)
 #define FULL_CYCLE_SAMPLE_EXP	 (SMARTMETER_BUFFSIZE_EXP)
 #define FULL_CYCLE_SAMPLE_NUM    (1<<FULL_CYCLE_SAMPLE_EXP)
-#define SCALE_FACTOR_V           2
-#define SCALE_FACTOR_I           20
+#define SCALE_FACTOR_V           1
+#define SCALE_FACTOR_I           1
+#define PF_OFFSET				 (SMARTMETER_BUFFSIZE/8)
 #else
 #define FULL_CYCLE_SAMPLE_EXP	 (7)
 #define FULL_CYCLE_SAMPLE_NUM    (1<<FULL_CYCLE_SAMPLE_EXP)
@@ -89,25 +94,35 @@ BRTOS_Sem    *Do_Calculation;
 
 /* BANDGAP_SQ = (Tensao_bandgap_milivolts^2) / 1000  ~= 1369 */
 #define BANDGAP_SQ    (INT32U)1369
-
 #define VOLTAGE_METER  1
 #define CURRENT_METER  1
-#define POWER_METER    0
+#define POWER_METER    1
+#define ENERGY_METER   0
+#define ENERGY_REG     0
 #define START_AUTO     1
+
+/* sanity checks */
+#if (VOLTAGE_METER == 0 || CURRENT_METER == 0) && (POWER_METER == 1)
+#error "power meter needs voltage and current meters enabled"
+#endif
+#if (POWER_METER == 0) && (ENERGY_METER == 1)
+#error "energy meter needs power meter enabled"
+#endif
 
 void EnergyMetering_Task(void *p)
 {
-  INT16U      j = 0;
-
 #if POWER_METER == 1
   INT32S      Potencia = 0;
   INT32S      Potencia_aparente = 0;
   INT32S      Potencia_reativa = 0;
+  INT32S      pf = 0;
+#endif
+
+#if ENERGY_METER == 1
   INT32U      energy_acc = 0;
   INT32U      energy_acc_index = 0;
   INT32U      energy_meter;
   INT32U      energy_meter_index = 0;
-  INT32S      pf = 0;
 #endif
 
 #if VOLTAGE_METER == 1
@@ -122,9 +137,10 @@ void EnergyMetering_Task(void *p)
   INT32S      fc = 0;
 #endif
 
+  INT32U      bandgap = 0;
+  INT16U      j = 0;
   INT8U       buffer = 0;
-  INT32U      bandgap = 0;      
-  
+
   // task setup
   if (OSSemCreate(0,&Do_Calculation) != ALLOC_EVENT_OK)
   {
@@ -174,7 +190,7 @@ void EnergyMetering_Task(void *p)
    SensorVoltage_Enable();  
    SensorCurrent_Enable(); 
         
-
+#if (!defined SMARTMETER_TEST_CALCULATIONS ||  (defined SMARTMETER_TEST_CALCULATIONS && SMARTMETER_TEST_CALCULATIONS == 0))
   /* BANDGAP_SQ = (Tensao_bandgap_milivolts^2) / 1000  */
   if (CurrentFactor == 0xFFFFFFFF) 
   {
@@ -186,7 +202,10 @@ void EnergyMetering_Task(void *p)
   }
   
   Fator_Potencia = (Fator_Potencia / (bandgap * bandgap)) * 10;
-  
+#else
+  Fator_Potencia = 1;
+#endif
+
   /* Set period of 130,2 us */
   TPM2MOD = 3276;  
   (void)(TPM2SC == 0);  
@@ -196,7 +215,7 @@ void EnergyMetering_Task(void *p)
   TPM2SC = 0x08;  /* Start only when relay is turned on */
 #endif
 
-#if POWER_METER == 1
+#if ENERGY_METER == 1
   /* get accumulated energy */
   energy_meter = Energy_Meter_Reg;       
   UserEnterCritical();
@@ -229,9 +248,13 @@ void EnergyMetering_Task(void *p)
       if (buffer == 1)
       {
         for(j=0;j<SMARTMETER_BUFFSIZE;j++)
-        {          
+        {
+#if VOLTAGE_METER == 1
           vrms += (INT32S)((tensao2[j]-Nivel_CC_Tensao) * (tensao2[j]-Nivel_CC_Tensao));
+#endif
+#if CURRENT_METER == 1
           corrente_rms += (INT32S)((corrente2[j]-Nivel_CC_Corrente) * (corrente2[j]-Nivel_CC_Corrente));
+#endif
 #if POWER_METER == 1
           Potencia += (INT32S)((corrente2[j] - Nivel_CC_Corrente) * (tensao2[j] - Nivel_CC_Tensao));
 #endif
@@ -239,9 +262,13 @@ void EnergyMetering_Task(void *p)
       }else
       {
         for(j=0;j<SMARTMETER_BUFFSIZE;j++)
-        {          
+        {
+#if VOLTAGE_METER == 1
           vrms += (INT32S)((tensao1[j]-Nivel_CC_Tensao) * (tensao1[j]-Nivel_CC_Tensao));
+#endif
+#if CURRENT_METER == 1
           corrente_rms += (INT32S)((corrente1[j]-Nivel_CC_Corrente) * (corrente1[j]-Nivel_CC_Corrente));
+#endif
 #if POWER_METER == 1
           Potencia += (INT32S)((corrente1[j] - Nivel_CC_Corrente) * (tensao1[j] - Nivel_CC_Tensao));
 #endif
@@ -251,27 +278,64 @@ void EnergyMetering_Task(void *p)
       if(samples_cnt == FULL_CYCLE_SAMPLE_NUM)
       {
     	  samples_cnt = 0;
+
+#if VOLTAGE_METER == 1
 		  /* RMS voltage - Calculo da tensao RMS, valor com uma casa depois da virgula */
 		  vrms = vrms >> FULL_CYCLE_SAMPLE_EXP;
 		  vrms = SquareRoot((INT32U)vrms);
-
-#if (!defined SMARTMETER_TEST_CALCULATIONS)
-		  vrms = (vrms * BANDGAP_MV * FATOR_TENSAO)/(100*bandgap);
 #endif
 
+#if CURRENT_METER == 1
 		  /* RMS current - Calculo da corrente RMS */
 		  corrente_rms = corrente_rms >> FULL_CYCLE_SAMPLE_EXP;
 		  corrente_rms = SquareRoot((INT32U)corrente_rms);
+#endif
 
+#if POWER_METER == 1
 
-			#if POWER_METER == 1
-				  /* Active power  calculation - Determina potência ativa, considerando o BandGap e o fator de ajuste dos sensores */
-				  Potencia = Potencia / FULL_CYCLE_SAMPLE_NUM;
-				  Potencia = (INT32S)((Potencia * Fator_Potencia) / 1000);
-			#endif
+		  /* Active power  calculation - Determina potência ativa,
+		   * considerando o BandGap e o fator de ajuste dos sensores */
+		  Potencia = Potencia >> FULL_CYCLE_SAMPLE_EXP;
 
+		  /* Apparent power - Calculo da potencia aparente */
+		  if ((vrms > 0) && (corrente_rms > 0))
+		  {
+			Potencia_aparente = (INT32U)((vrms * corrente_rms));
+		  }
+
+		  // Calculo da potencia reativa
+		  Potencia_reativa = 0;
+		  pf = 1000;  /* Calculo do fator de potencia, resolução de três casas de precisão */
+
+		  if (Potencia_aparente > 0)
+		  {
+			 int32_t s = Potencia_aparente >> 6;
+			 int32_t p = Potencia >> 6;
+			 Potencia_reativa = (s*s)-(p*p);
+			 if(Potencia_reativa > 0)
+			 {
+				Potencia_reativa = SquareRoot((INT32U)Potencia_reativa);
+				Potencia_reativa = Potencia_reativa << 6;
+			 }else
+			 {
+				 Potencia_reativa = 0;
+			 }
+
+			 pf = (Potencia * 1000)/Potencia_aparente;
+			 if (pf > 1000)
+			 {
+			   pf = 1000;
+			 }
+		  }
+#endif
+
+#if (!defined SMARTMETER_TEST_CALCULATIONS ||  (defined SMARTMETER_TEST_CALCULATIONS && SMARTMETER_TEST_CALCULATIONS == 0))
+		  vrms = (vrms * BANDGAP_MV * FATOR_TENSAO)/(100*bandgap);
+#endif
+
+#if CURRENT_METER == 1
 		  /* Current sensor calibration - Teste para calibrar sensor (se ainda não calibrado) */
-#if (!defined SMARTMETER_TEST_CALCULATIONS)
+#if (!defined SMARTMETER_TEST_CALCULATIONS ||  (defined SMARTMETER_TEST_CALCULATIONS && SMARTMETER_TEST_CALCULATIONS == 0))
 		  #if (CALIB_CURRENT == 1)
 		  if (CurrentFactor == 0xFFFFFFFF)
 		  {
@@ -308,31 +372,41 @@ void EnergyMetering_Task(void *p)
 			corrente_rms = (corrente_rms * BANDGAP_MV * CurrentFactor)/(100*bandgap);
 		  }
 		  #endif
+
+	#endif
 #endif
 
-	#if POWER_METER == 1
-		  /* Apparent power - Calculo da potencia aparente com 3 digitos de precisao */
-		  if ((vrms * corrente_rms) > 0)
-		  {
-			Potencia_aparente = (INT32U)((vrms * corrente_rms)/10);
-		  }
+	#if POWER_METER
+		  Potencia = (INT32S)((Potencia * Fator_Potencia) / 1000);
+		  Potencia_aparente = (INT32S)((Potencia_aparente * Fator_Potencia) / 1000);
+		  Potencia_reativa = (INT32S)((Potencia_reativa * Fator_Potencia) / 1000);
 	#endif
 
 
 		  UserEnterCritical();
+	#if VOLTAGE_METER
 			SmartEnergyValues.v_rms = (INT16U)vrms;
+	#endif
+	#if CURRENT_METER
 			SmartEnergyValues.i_rms = (INT16U)corrente_rms;
-	#if POWER_METER == 1
-			SmartEnergyValues.power_S = (INT32U)Potencia_aparente;
+	#endif
+	#if POWER_METER
+			SmartEnergyValues.power_S = Potencia_aparente;
 			SmartEnergyValues.power_P = Positive(Potencia);
+			SmartEnergyValues.power_Q = Potencia_reativa;
+			SmartEnergyValues.power_factor = (INT16U)pf;
 	#endif
 		  UserExitCritical();
 
-		    /* reset vars */
-			vrms = 0;
-			corrente_rms = 0;
+		  /* reset vars */
+#if VOLTAGE_METER
+		vrms = 0;
+#endif
+#if CURRENT_METER
+		corrente_rms = 0;
+#endif
 
-	#if POWER_METER == 1
+	#if ENERGY_METER
 		  /* Calculo do acumulador de energia. Para o acumulador a resolução da potência
 		  é diminuida para 1 casa decimal */
 		  energy_acc += Positive(Potencia / 100);
@@ -361,57 +435,24 @@ void EnergyMetering_Task(void *p)
 			/* Grava 1 hora de energia acumulada */
 			if (energy_meter_index >= 60)
 			{
-			  energy_meter_index = 0;
-			  EEPROM_Store((INT32U)&Energy_Meter_Reg, (INT32U *) &energy_meter, 1);
+				energy_meter_index = 0;
+				#if ENERGY_REG
+				  EEPROM_Store((INT32U)&Energy_Meter_Reg, (INT32U *) &energy_meter, 1);
+				#endif
 			}
 		  }
-
-
-		  // Calculo da potencia reativa
-		  Potencia_reativa = 0;
-
-		  if ((Potencia_aparente > 0) && (Potencia > 0))
-		  {
-			Potencia = Potencia / 10;
-			Potencia_aparente = Potencia_aparente / 10;
-			if ((Potencia_aparente > 0) && (Potencia > 0))
-			{
-			  Potencia_reativa = ((Potencia_aparente * Potencia_aparente) / 10)-((Potencia * Potencia) / 10);
-			}
-		  }
-
-
-		  if(Potencia_reativa > 0)
-		  {
-			Potencia_reativa = SquareRoot((INT32U)Potencia_reativa);
-		  }
-		  else
-		  {
-			Potencia_reativa = 0;
-		  }
-
-
-		  /* Calculo do fator de potencia
-		   Resolução de três casas de precisão */
-		  pf = 1000;
-		  if ((Potencia > 0) && (Potencia_aparente > 0))
-		  {
-			pf = (Potencia * 1000)/Potencia_aparente;
-			if (pf > 1000)
-			{
-			  pf = 1000;
-			}
-		  }
-
-
 		  UserEnterCritical();
 			/* Multiplica por 10 para deixar na mesma
 			base das outras potencias */
-			SmartEnergyValues.power_factor = (INT16U)pf;
-			SmartEnergyValues.power_Q = (INT32U)(Potencia_reativa*10);
 			SmartEnergyValues.energy_meter = energy_meter;
 		  UserExitCritical();
-		#endif
+
+#endif
+
+	#if POWER_METER
+			Potencia = 0;
+	#endif
+
       }
    }
 }
@@ -431,9 +472,12 @@ void ADC_handler(void)
     INT16U current, voltage;
     OS_SR_SAVE_VAR;
 
+#define VOLTAGE_INPUT inputsignal1
+#define CURRENT_INPUT inputsignal1
+
 #if (defined SMARTMETER_TEST_CALCULATIONS &&  SMARTMETER_TEST_CALCULATIONS == 1)
-    voltage = (INT16U)((InputVecRMS1[buffer_counter*SUBSAMPLE_FACTOR]*SCALE_FACTOR_V + (INT16U)(2048)));
-    current = (INT16U)((InputVecRMS2[buffer_counter*SUBSAMPLE_FACTOR]*SCALE_FACTOR_I + (INT16U)(2048)));
+    voltage = (INT16U)(((VOLTAGE_INPUT[(buffer_counter*SUBSAMPLE_FACTOR)] >> 4)*SCALE_FACTOR_V + (INT16U)(2048)));
+    current = (INT16U)(((CURRENT_INPUT[((buffer_counter+PF_OFFSET)*SUBSAMPLE_FACTOR)% MAX_INPUT_SIZE] >> 4) *SCALE_FACTOR_I + (INT16U)(2048)));
 #else
     /* take two measurements of voltage and current */   
     OSEnterCritical();

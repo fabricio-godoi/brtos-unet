@@ -122,8 +122,8 @@
 #define OSRTCEN                     0
 
 // Stack Size of the Idle Task
-#define IDLE_STACK_SIZE             (176)
-#define SYSTEM_TIME_STACK_SIZE		(144)
+#define IDLE_STACK_SIZE             (144)
+#define SYSTEM_TIME_STACK_SIZE		(148)
 
 /// Stack Defines
 #define HEAP_MEMBLOCKSIZE		64

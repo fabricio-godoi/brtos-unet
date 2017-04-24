@@ -14,12 +14,12 @@
 /****************************************************************/
 /* TASKS STACK SIZE ASSIGNMENT                                  */
 #define Timers_StackSize			  (128 + 16)
-#define System_Time_StackSize         (128 + 16)
+#define System_Time_StackSize         (128 + 24)
 #define RelayControl_StackSize         0 //(352)
 #define EnergyMetering_StackSize       (192+64) //(288)
 #define UNET_App_StackSize             0 //(256) //(352 + 384)
 #define UNET_SensorsApp_StackSize      0 	//(288)
-#define Terminal_StackSize		   	  (384+256)
+#define Terminal_StackSize		   	  (384+256 + 16)
 // #define Bootloader_Task_StackSize - see define below
 
 #define TASKS_STACK_SIZE  (Timers_StackSize+System_Time_StackSize+RelayControl_StackSize+ \
@@ -41,8 +41,6 @@
 #define   CALIB_CURRENT          0
 #define   CALIB_VALUE            945
 
-/* Sofware/app testing */
-#define   SMARTMETER_TEST_CALCULATIONS      1
 
 /*****************************************************************/
 /** RELAY CONTROL APP CONFIG                                    */

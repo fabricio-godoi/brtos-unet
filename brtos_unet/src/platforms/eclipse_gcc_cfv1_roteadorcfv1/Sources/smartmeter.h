@@ -67,8 +67,8 @@ typedef struct _SE_STRUCTURE
   INT16U               v_rms;
   INT16U               i_rms;
   INT16U               power_factor;
-  INT32U               power_S;
-  INT32U               power_Q;
+  INT32S               power_S;
+  INT32S               power_Q;
   INT32S               power_P;  
   INT32U               energy_meter;
 } SE_STRUCT;
