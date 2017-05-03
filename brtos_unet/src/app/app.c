@@ -523,57 +523,8 @@ INT8U UNET_TX_ToBaseSation(INT8U Command, INT8U Attribute, _uint32_t * ptr_data,
       return j;
 }
 
-
-#define DEBUG_WRITE(x);
-
-void Reason_of_Reset(void);
-
-void Reason_of_Reset(void)
-{  
-  INT8U reason = 0;
-  
-  UserEnterCritical();
-    reason = SRS;
-  UserExitCritical();
-  
-  switch(reason)
-  {
-    case 0b00000000:
-      DEBUG_WRITE("Reset caused by BDM");
-      break;
-      
-    case 0b00000010:
-      DEBUG_WRITE("Reset caused by low voltage");
-      break;      
-      
-    case 0b00001000:
-      DEBUG_WRITE("Reset caused by illegal address");
-      break;
-      
-    case 0b00010000:
-      DEBUG_WRITE("Reset caused by illegal opcode");
-      break;
-      
-    case 0b00100000:
-      DEBUG_WRITE("Reset caused by watchdog");
-      break;
-      
-    case 0b01000000:
-      DEBUG_WRITE("Reset caused by reset pin");
-      break;
-      
-    case 0b10000010:
-    case 0b10000000:
-      DEBUG_WRITE("Power on Reset, Cold Reset");
-      break;
-      
-    default:
-      DEBUG_WRITE("Unknown or several reasons");
-      break;      
-  }
-}
-
 #endif
+
 
 
 static FAIL_T fail = NO_FAIL;

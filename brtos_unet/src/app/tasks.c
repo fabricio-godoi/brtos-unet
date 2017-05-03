@@ -174,7 +174,7 @@ void UNET_App_1_Decode(void *param)
    for (;;)
    {
        /* Wait event from APP layer, with or without timeout */
-	   (void)unet_recv(&server,packet,0);
+	   (void)unet_recv(&server,packet,8,0);
 	   PRINTF_APP(1,"Packet received from (port/address):  %d/",server.sender_port);
 	   PRINTF_APP_ADDR64(1,&(server.sender_address));
        switch(app_payload->APP_Profile)
@@ -453,7 +453,7 @@ char unet_putchar(char c)
 	{
 		if(server_putchar != NULL)
 		{
-			while(unet_send(server_putchar, term_buffer, term_buffer_size, 21) < 0)
+			while(unet_send(server_putchar, (uint8_t *)term_buffer, term_buffer_size, 21) < 0)
 			{
 				OSDelayTask(250);
 			}
@@ -465,31 +465,34 @@ char unet_putchar(char c)
 }
 #endif
 
+#define MAX_RX_SIZE 	16
+uint8_t	payload_rx[MAX_RX_SIZE];
+
 void Terminal_Task(void *p)
 {
 	unet_transport_t server;
-	uint8_t		payload_rx[16];
-	//uint8_t   	payload_tx[512];
 	uint8_t		*cmd;
 	uint8_t		*ret;
 	int 		idx = 0;
 	int 		size = 0;
 	(void)p;
 
+	// Escuta porta 23
 	server.src_port = 23;
 	server.dst_port = 22;
-	// Escuta porta 23
 	unet_listen(&server);
 
-	/* */
 	server_putchar = &server;
 
 	while(1)
 	{
-		(void)unet_recv(&server,payload_rx,0);
+		(void)unet_recv(&server,payload_rx,MAX_RX_SIZE-2,0);
 	    server.dest_address = &(server.sender_address);
 	    server.dst_port = server.sender_port;
-		payload_rx[server.payload_size] = '\n';
+	    size = server.payload_size;
+	    if(size > (MAX_RX_SIZE-2)) size = MAX_RX_SIZE-2;
+		payload_rx[size] = '\n';
+		payload_rx[size+1] = '\0';
 		cmd = payload_rx;
 		while(*cmd)
 		{

@@ -90,6 +90,9 @@ CMD_FUNC(top)
 	OSAvailableMemory(big_buffer);
 	OSTaskList(big_buffer);
 
+	extern void Cause_of_Reset(void);
+	Cause_of_Reset();
+
 #else
   	OSCPULoad(big_buffer);
     printf_terminal(big_buffer);
@@ -119,7 +122,7 @@ CMD_FUNC(meter)
 		printf_terminal("P: %u W\n\r",se.power_P);
 		printf_terminal("Q: %u VAr\n\r",se.power_Q);
 		printf_terminal("S: %u VA\n\r",se.power_S);
-		printf_terminal("PF:%u.%u\n\r",se.power_factor/1000,se.power_factor%1000);
+		printf_terminal("PF:%u.%u \n\r",se.power_factor/1000,se.power_factor%1000);
 		printf_terminal("E: %u Wh\n\r",se.energy_meter);
 
 #endif
@@ -266,7 +269,7 @@ CMD_FUNC(netrx)
 
 	unet_connect(&client);
 
-	if (unet_recv(&client,payload_rx,timeout) >= 0)
+	if (unet_recv(&client,payload_rx, sizeof(payload_rx), timeout) >= 0)
 	{
 		printf_terminal("Packet received from (port/address):  %d/",client.sender_port); print_addr64(&(client.sender_address));
 		printf_terminal("Packet Content: %s\n\r",payload_rx);
@@ -318,12 +321,12 @@ CMD_FUNC(nettx)
 	printf_terminal("Response:\n\r");
 	size = 0;
 	do{
-		if (unet_recv(&client, payload_rx, 5000) >= 0)
+		if (unet_recv(&client, payload_rx, sizeof(payload_rx), 5000) >= 0)
 		{
 			size += client.payload_size + PACKET_OVERHEAD_SIZE;
 
 			char *p;
-			if((p=strchr(payload_rx, ETX)) != NULL)
+			if((p=strchr((char*)payload_rx, ETX)) != NULL)
 			{
 				*p = '\0';
 				client.payload_size = 0;

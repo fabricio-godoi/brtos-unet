@@ -157,7 +157,7 @@ int main_app(void)
   #include "smartmeter.h"
 
   /* Initialize A/D Converter and bandgap reference */
-  ADC_Setup(HighSpeed, ShortSampleTime, 12);
+  ADC_Setup(HighSpeed, LongSampleTime, 12);
 
   if(OSInstallTask(&EnergyMetering_Task,"Energy meter Task",EnergyMetering_StackSize,EnergyMetering_Task_Priority,NULL, NULL) != OK)
   {
