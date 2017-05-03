@@ -76,13 +76,44 @@ int main(void)
 	return 0;
 }
 
+void force_reset(void)
+{
+	UserEnterCritical();
+	while(1){}
+}
+
 /*
  * Example use of interrupt handler *
  * See vectors.c for interrupt names
  */
 __attribute__((__interrupt__))
-void AccessError_Handler(void) {
-   for(;;) {
+void AccessError_Handler(void)
+{
+	force_reset();
+	for(;;)
+	{
+      __breakpoint();
+    }
+}
+
+/*
+ * Example use of interrupt handler *
+ * See vectors.c for interrupt names
+ */
+__attribute__((__interrupt__))
+void AddressError_Handler(void) {
+	force_reset();
+	for(;;)
+	{
+      __breakpoint();
+    }
+}
+
+__attribute__((__interrupt__))
+void IllegalInstruction_Handler(void) {
+   force_reset();
+   for(;;)
+   {
       __breakpoint();
    }
 }

@@ -23,7 +23,7 @@
 */
 
 #include "derivative.h" /* include peripheral declarations */
-
+#include "stdint.h"
 /*****************************************************************************
  * Global Functions Prototypes
  *****************************************************************************/
@@ -33,3 +33,6 @@
  * Local Functions Prototypes
  *****************************************************************************/
 void System_Init(void);
+void Cause_of_Reset(void);
+uint8_t get_cause_of_reset(void);
+

@@ -207,7 +207,7 @@ void EnergyMetering_Task(void *p)
 #endif
 
   /* Set period of 130,2 us */
-  TPM2MOD = 3276;  
+  TPM2MOD = 3125; // 3125 @ 24MHz, 3277 @ 25MHz
   (void)(TPM2SC == 0);  
 #if START_AUTO == 1
   TPM2SC = 0x48;
@@ -300,7 +300,7 @@ void EnergyMetering_Task(void *p)
 		  /* Apparent power - Calculo da potencia aparente */
 		  if ((vrms > 0) && (corrente_rms > 0))
 		  {
-			Potencia_aparente = (INT32U)((vrms * corrente_rms));
+			Potencia_aparente = (INT32S)((vrms * corrente_rms));
 		  }
 
 		  // Calculo da potencia reativa
@@ -321,7 +321,11 @@ void EnergyMetering_Task(void *p)
 				 Potencia_reativa = 0;
 			 }
 
-			 pf = (Potencia * 1000)/Potencia_aparente;
+			 if(Potencia_aparente >= Potencia && Potencia > 0)
+			 {
+				 pf = (Potencia * 1000)/Potencia_aparente;
+			 }
+
 			 if (pf > 1000)
 			 {
 			   pf = 1000;
@@ -391,9 +395,9 @@ void EnergyMetering_Task(void *p)
 			SmartEnergyValues.i_rms = (INT16U)corrente_rms;
 	#endif
 	#if POWER_METER
-			SmartEnergyValues.power_S = Potencia_aparente;
-			SmartEnergyValues.power_P = Positive(Potencia);
-			SmartEnergyValues.power_Q = Potencia_reativa;
+			SmartEnergyValues.power_S = Potencia_aparente/1000;
+			SmartEnergyValues.power_P = Positive(Potencia)/1000;
+			SmartEnergyValues.power_Q = Potencia_reativa/1000;
 			SmartEnergyValues.power_factor = (INT16U)pf;
 	#endif
 		  UserExitCritical();

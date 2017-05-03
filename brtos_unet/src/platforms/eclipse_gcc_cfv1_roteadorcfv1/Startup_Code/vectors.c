@@ -117,6 +117,18 @@ const SecurityInfo securityInfo = {
 #error "Device family not set"
 #endif
 
+#if 0
+typedef struct {
+    uint8_t  res0;
+    uint8_t  res1;
+    uint8_t  ftrim;
+    uint8_t  nvtrim;
+} TrimInfo;
+
+__attribute__ ((section(".trim_information")))
+const TrimInfo trimInfo = {0xFF,0xFF,0x00,0x98};
+#endif
+
 /*
  * Vector table related
  */
@@ -138,7 +150,11 @@ typedef void( *const intfunc )( void );
  *
  */
  __attribute__((__interrupt__))
-void Default_Handler(void) {
+void Default_Handler(void)
+{
+   extern void force_reset(void);
+   force_reset();
+
    while (1) {
       __asm__("halt");
    }
@@ -252,7 +268,7 @@ void Int_L1_SWI_Handler(void)             WEAK_DEFAULT_HANDLER;
 
 typedef struct {
    uint32_t *initialSP;
-   intfunc  handlers[];
+   intfunc  handlers[254];
 } VectorTable;
 
 __attribute__ ((section(".interrupt_vectors")))
@@ -464,7 +480,6 @@ VectorTable const __vector_table = {
 	  Default_Handler,
 	  Default_Handler,
 	  Default_Handler,                    /*  200                                                                         */
-	  Default_Handler,
 	  Default_Handler,
 	  Default_Handler,
 	  Default_Handler,

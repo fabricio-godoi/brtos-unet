@@ -18,6 +18,13 @@ SECTIONS
 	/* Make sure we pulled in at least a reset vector.  */
 	ASSERT (. != __flash_start, "No interrupt vector");
 
+	/* Emit a trim field */
+/*
+	. = __flash_start + 0x3fc;
+	KEEP(*(.trim_information))
+	ASSERT (. == __flash_start + 0x400, "No trim information");
+*/
+	
 	/* Emit a Security field */
 	. = __flash_start + 0x400;
 	KEEP(*(.security_information))

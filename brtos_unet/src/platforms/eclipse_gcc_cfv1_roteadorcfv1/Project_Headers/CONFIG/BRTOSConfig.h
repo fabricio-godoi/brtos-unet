@@ -114,7 +114,7 @@
 
 
 /// TickTimer Defines
-#define configCPU_CLOCK_HZ          (INT32U)25165824   ///< CPU clock in Hertz
+#define configCPU_CLOCK_HZ          (INT32U)24000000 //25165824   ///< CPU clock in Hertz
 #define configTICK_RATE_HZ          (INT32U)1000        ///< Tick timer rate in Hertz
 #define configTIMER_PRE_SCALER      0                   ///< Informs if there is a timer prescaler
 #define configRTC_CRISTAL_HZ        (INT32U)1000
@@ -122,13 +122,12 @@
 #define OSRTCEN                     0
 
 // Stack Size of the Idle Task
-#define IDLE_STACK_SIZE             (144)
-#define SYSTEM_TIME_STACK_SIZE		(148)
+#define IDLE_STACK_SIZE             (136)
 
 /// Stack Defines
 #define HEAP_MEMBLOCKSIZE		64
-#define HEAP_MEMBLOCKNUM		50
-#define HEAP_SIZE 				(IDLE_STACK_SIZE+SYSTEM_TIME_STACK_SIZE+HEAP_MEMBLOCKNUM*HEAP_MEMBLOCKSIZE)
+#define HEAP_MEMBLOCKNUM		54
+#define HEAP_SIZE 				(IDLE_STACK_SIZE+HEAP_MEMBLOCKNUM*HEAP_MEMBLOCKSIZE)
 
 // Queue heap defines
 #define QUEUE_HEAP_SIZE 		1

@@ -13,16 +13,17 @@
 
 /****************************************************************/
 /* TASKS STACK SIZE ASSIGNMENT                                  */
-#define Timers_StackSize			  (128 + 16)
-#define System_Time_StackSize         (128 + 24)
+#define Timers_StackSize			  (128 + 64)
+#define System_Time_StackSize         (128 + 36)
 #define RelayControl_StackSize         0 //(352)
-#define EnergyMetering_StackSize       (192+64) //(288)
+#define EnergyMetering_StackSize      (192+64) //(288)
 #define UNET_App_StackSize             0 //(256) //(352 + 384)
 #define UNET_SensorsApp_StackSize      0 	//(288)
-#define Terminal_StackSize		   	  (384+256 + 16)
+#define Terminal_StackSize		   	  (384+256 + 64)
 // #define Bootloader_Task_StackSize - see define below
 
-#define TASKS_STACK_SIZE  (Timers_StackSize+System_Time_StackSize+RelayControl_StackSize+ \
+#include "NetConfig.h"
+#define TASKS_STACK_SIZE  (Timers_StackSize+System_Time_StackSize+RelayControl_StackSize+ UNET_STACKS + \
 		EnergyMetering_StackSize+UNET_App_StackSize+UNET_SensorsApp_StackSize+Terminal_StackSize)
 
 #if ((TASKS_STACK_SIZE) - (HEAP_SIZE - IDLE_STACK_SIZE)) > 0
@@ -31,8 +32,8 @@
 
 /****************************************************************/
 /** SMART METER APP CONFIG                                      */
-#define   FATOR_TENSAO   (INT32S) 368 //365
-#define   FATOR_CORRENTE (INT32S) 676 //564 // Multiplied by 100
+#define   FATOR_TENSAO   (INT32S) 368 //365  15||10 = 6 => (2200+6)/6 = 367,66
+#define   FATOR_CORRENTE (INT32S) 540 //564  // (1000/185) x 100
 
 #define   ENERGY_REGISTER_ADDR              0x0001FC00
 #define   CURRENT_CALIB_REGISTER_ADDR       0x000021D8

@@ -124,33 +124,46 @@ static void Mcu_Init(void)
      /* Initialization of CPU registers */
      #if (NESTING_INT == 1)
 		 SET_VBR(0);
-		 SET_CPUCR(0);
+		 SET_CPUCR(0xC0000000);
      #else
 		 SET_VBR(0);
 		 SET_CPUCR(0x12000000);
      #endif
 
 
-
-
      // Configura Clock interno com fonte de relógio
      // Barramento de 25Mhz
 
+		 /*lint -restore Enable MISRA rule (1.1) checking. */
+		   /*  System clock initialization */
+		   /*lint -save  -e923 Disable MISRA rule (11.3) checking. */
+		   if (*(unsigned char*)0x03FFU != 0xFFU) { /* Test if the device trim value is stored on the specified address */
+		     ICSTRM = *(unsigned char*)0x03FFU; /* Initialize ICSTRM register from a non volatile memory */
+		     ICSSC = (unsigned char)((*(unsigned char*)0x03FEU) & (unsigned char)0x01U); /* Initialize ICSSC register from a non volatile memory */
+		   }
+		   /*lint -restore Enable MISRA rule (11.3) checking. */
+
+#define CLOCK_24MHZ
+#ifdef CLOCK_24MHZ
+	 /*  System clock initialization */
+	 /* ICSC1: CLKS=0,RDIV=0,IREFS=1,IRCLKEN=1,IREFSTEN=0 */
+	 ICSC1 = 0x07;                        /* Initialization of the ICS control register 1 */
+#else
      /*  System clock initialization */
      /* ICSC1: CLKS=0,RDIV=0,IREFS=1,IRCLKEN=0,IREFSTEN=0 */
      ICSC1 = 0x04;                        /* Initialization of the ICS control register 1 */
+#endif
+
      /* ICSC2: BDIV=0,RANGE=0,HGO=0,LP=0,EREFS=0,ERCLKEN=0,EREFSTEN=0 */
      ICSC2 = 0x00;                        /* Initialization of the ICS control register 2 */
-#if (__GNUC__)
-     while(!(ICSSC & ICSSC_IREFST_MASK)){}
-#else
-     while(!ICSSC_IREFST) {               /* Wait until the source of reference clock is internal clock */
-     }
-#endif
+
+     while(!(ICSSC & ICSSC_IREFST_MASK)){} /* Wait until the source of reference clock is internal clock */
+
      /* ICSSC: DRST_DRS=2,DMX32=0 */
      ICSSC = (ICSSC & (unsigned char)~0x60) | (unsigned char)0x80; /* Initialization of the ICS status and control */
      while((ICSSC & 0xC0) != 0x80) {      /* Wait until the FLL switches to High range DCO mode */
      }
+
 
      /* INTC_WCR: ENB=1,MASK=0 */
      // Quando ENB = 1, permite voltar de um wait State
@@ -409,3 +422,67 @@ void System_Init(void)
     Mcu_Init(); /* initialize the MCU registers */
     MCG_Init(); /* initialize the MCG to generate 24MHz bus clock */
 }
+
+#if BRTOS_PLATFORM == BOARD_ROTEADORCFV1
+
+#ifndef TERM_PRINT
+#include "printf_lib.h"
+#define TERM_PRINT(...) printf_lib(__VA_ARGS__);
+#endif
+#define DEBUG_WRITE(x)	TERM_PRINT(x);
+
+#include "stdint.h"
+uint8_t get_cause_of_reset(void)
+{
+	uint8_t reason;
+	UserEnterCritical();
+	    reason = SRS;
+	UserExitCritical();
+	return reason;
+}
+
+void Cause_of_Reset(void)
+{
+  INT8U reason = 0;
+
+  reason = get_cause_of_reset();
+
+  DEBUG_WRITE("Reset cause: ");
+  switch(reason)
+  {
+    case 0b00000000:
+      DEBUG_WRITE("BDM");
+      break;
+
+    case 0b00000010:
+      DEBUG_WRITE("low voltage");
+      break;
+
+    case 0b00001000:
+      DEBUG_WRITE("illegal address");
+      break;
+
+    case 0b00010000:
+      DEBUG_WRITE("illegal opcode");
+      break;
+
+    case 0b00100000:
+      DEBUG_WRITE("watchdog");
+      break;
+
+    case 0b01000000:
+      DEBUG_WRITE("reset pin");
+      break;
+
+    case 0b10000010:
+    case 0b10000000:
+      DEBUG_WRITE("power on");
+      break;
+
+    default:
+      DEBUG_WRITE("unknown reason");
+      break;
+  }
+}
+
+#endif
