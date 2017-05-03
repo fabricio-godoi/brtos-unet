@@ -78,12 +78,13 @@ int unet_close(unet_transport_t *server_client){
 	return 0;
 }
 
-int unet_recv(unet_transport_t *server_client, uint8_t *buffer, uint16_t timeout){
+int unet_recv(unet_transport_t *server_client, uint8_t *buffer, uint16_t buffer_size, uint16_t timeout){
 	int ret;
-	
+	uint16_t count;
 	if ((ret = OSSemPend(server_client->wake_up,timeout)) == OK)
 	{
-		memcpy(buffer,server_client->packet,server_client->payload_size);
+		count = (server_client->payload_size > buffer_size)? buffer_size:server_client->payload_size;
+		memcpy(buffer,server_client->packet, count);
 	}
 	return ret;
 }
