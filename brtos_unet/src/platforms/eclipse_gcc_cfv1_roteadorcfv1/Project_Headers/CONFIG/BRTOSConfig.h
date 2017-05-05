@@ -126,7 +126,7 @@
 
 /// Stack Defines
 #define HEAP_MEMBLOCKSIZE		64
-#define HEAP_MEMBLOCKNUM		54
+#define HEAP_MEMBLOCKNUM		56
 #define HEAP_SIZE 				(IDLE_STACK_SIZE+HEAP_MEMBLOCKNUM*HEAP_MEMBLOCKSIZE)
 
 // Queue heap defines

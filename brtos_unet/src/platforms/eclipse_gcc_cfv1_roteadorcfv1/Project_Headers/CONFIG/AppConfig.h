@@ -13,7 +13,7 @@
 
 /****************************************************************/
 /* TASKS STACK SIZE ASSIGNMENT                                  */
-#define Timers_StackSize			  (128 + 64)
+#define Timers_StackSize			  (128 + 80)
 #define System_Time_StackSize         (128 + 36)
 #define RelayControl_StackSize         0 //(352)
 #define EnergyMetering_StackSize      (192+64) //(288)
