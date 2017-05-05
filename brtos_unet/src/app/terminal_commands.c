@@ -48,7 +48,9 @@ void terminal_newline(void)
 addr64_t 		  dest_addr64;
 unet_transport_t  client = {.src_port = 22, .dst_port = 23, .dest_address = &dest_addr64};
 uint8_t   		  payload_tx[16];
-uint8_t   		  payload_rx[98];
+
+#define PAYLOAD_RX_SIZE   98
+uint8_t   		  payload_rx[PAYLOAD_RX_SIZE+1];
 
 char* packet_state_to_string(uint8_t state)
 {
@@ -269,7 +271,7 @@ CMD_FUNC(netrx)
 
 	unet_connect(&client);
 
-	if (unet_recv(&client,payload_rx, sizeof(payload_rx), timeout) >= 0)
+	if (unet_recv(&client,payload_rx, PAYLOAD_RX_SIZE, timeout) >= 0)
 	{
 		printf_terminal("Packet received from (port/address):  %d/",client.sender_port); print_addr64(&(client.sender_address));
 		printf_terminal("Packet Content: %s\n\r",payload_rx);
@@ -321,7 +323,7 @@ CMD_FUNC(nettx)
 	printf_terminal("Response:\n\r");
 	size = 0;
 	do{
-		if (unet_recv(&client, payload_rx, sizeof(payload_rx), 5000) >= 0)
+		if (unet_recv(&client, payload_rx, PAYLOAD_RX_SIZE, 5000) == OK)
 		{
 			size += client.payload_size + PACKET_OVERHEAD_SIZE;
 

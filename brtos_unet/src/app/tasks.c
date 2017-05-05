@@ -95,7 +95,8 @@ void pisca_led_net(void *param)
 	unet_transport_t client;
 	addr64_t dest_addr64 = {.u8 = {0x47,0x42,0x00,0x00,0x00,0x00,0x12,0x34}};
 	uint8_t packet[8];
-	uint8_t response[32];
+	#define SIZE_RESPONSE  32
+	uint8_t response[SIZE_RESPONSE+1];
 	APP_PACKET *app_payload;
 
 	app_payload = (APP_PACKET*)packet;
@@ -116,7 +117,7 @@ void pisca_led_net(void *param)
 		// Envia mensagem para o client
 		app_payload->APP_Command_Attribute = TRUE;
 		unet_send(&client, packet, 3,30);
-		if (unet_recv(&client,response,1000) >= 0)
+		if (unet_recv(&client,response,SIZE_RESPONSE,1000) >= 0)
 		{
 			PRINTF_APP(1,"Packet received from (port/address):  %d/",client.sender_port); PRINTF_APP_ADDR64(1,&(client.sender_address));
 			PRINTF_APP(1,"Packet Content: %s\n\r",response);
@@ -126,7 +127,7 @@ void pisca_led_net(void *param)
 		}
 		app_payload->APP_Command_Attribute = FALSE;
 		unet_send(&client, packet, 3,30);
-		if (unet_recv(&client,response,1000) >= 0)
+		if (unet_recv(&client,response,SIZE_RESPONSE,1000) >= 0)
 		{
 			PRINTF_APP(1,"Packet received from (port/address):  %d/",client.sender_port); PRINTF_APP_ADDR64(1,&(client.sender_address));
 			PRINTF_APP(1,"Packet Content: %s\n\r",response);
@@ -447,7 +448,8 @@ static int term_buffer_size = 0;
 char unet_putchar(char c)
 {
 
-	term_buffer[term_buffer_size++%MAX_APP_PAYLOAD_SIZE] = c;
+	term_buffer[term_buffer_size%MAX_APP_PAYLOAD_SIZE] = c;
+	term_buffer_size++;
 
 	if(term_buffer_size == MAX_APP_PAYLOAD_SIZE || c == ETX)
 	{
