@@ -91,7 +91,8 @@ void OSConfigureTimerForRuntimeStats( void )
     xIntEnable(INT_FTM0);
 }
 
-unsigned int OSGetTimerForRuntimeStats(void){
+uint32_t OSGetTimerForRuntimeStats(void)
+{
 	return HighFrequencyTimer;
 }
 

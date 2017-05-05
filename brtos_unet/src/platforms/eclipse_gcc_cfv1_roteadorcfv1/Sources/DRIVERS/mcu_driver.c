@@ -124,7 +124,8 @@ static void Mcu_Init(void)
      /* Initialization of CPU registers */
      #if (NESTING_INT == 1)
 		 SET_VBR(0);
-		 SET_CPUCR(0xC0000000);
+		 //SET_CPUCR(0xC0000000);  // force ISR on error
+		 SET_CPUCR(0x00000000); // force reset on error
      #else
 		 SET_VBR(0);
 		 SET_CPUCR(0x12000000);

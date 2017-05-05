@@ -57,7 +57,6 @@
 #define COMPUTES_TASK_LOAD			1
 
 extern void OSConfigureTimerForRuntimeStats(void);
-extern unsigned int OSGetTimerForRuntimeStats(void);
 
 /// Defines the memory allocation and deallocation function to the dynamic queues
 #include "umm_malloc.h"
