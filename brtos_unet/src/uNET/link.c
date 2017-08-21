@@ -13,6 +13,14 @@
 #include "link.h"
 #include "unet_router.h"
 
+
+// NOTE: the coordinator ID must be set to zero to this fully work
+#ifdef COOJA_ANNOTATION
+#define COOJA_PRINTF(...) PRINTF(__VA_ARGS__)
+#else
+#define COOJA_PRINTF(...)
+#endif
+
 /* neighbor table */
 volatile unet_neighborhood_t  unet_neighbourhood[NEIGHBOURHOOD_SIZE];
 packet_t link_pkt;
@@ -26,6 +34,17 @@ volatile uint8_t               			 	 NeighborLinkPacketTimeCnt  = 1;
 volatile uint8_t just_reset = TRUE;
 volatile uint8_t link_reset_cnt = 0;
 #endif
+
+typedef struct{
+	uint8_t Pending;  // 0 - no update needed, 1 - need to update
+	uint8_t TableIndex;
+	uint8_t NodeDepth;
+	uint16_t ParentNeighborID;
+	uint16_t ParentRSSI;
+}parent_info_t;
+
+// When new parent is detected, this will store it's data
+volatile parent_info_t NewParent = {0, 0, 0, 0, 0};
 
 /*--------------------------------------------------------------------------------------------*/
 packet_t * link_packet_get(void)
@@ -212,10 +231,10 @@ void link_parent_switch(void)
 
 	uint8_t _thisNodeDepth = node_data_get(NODE_DISTANCE);
 	uint8_t i =0;
-	// !!!! A meu ver não precisa pegar o id do parent
+	// !!!! A meu ver nï¿½o precisa pegar o id do parent
 	// Vai ser substituido mesmo
-	// R: é para o caso de não ser substítuido (i.e não entrar no 'if'),
-	// aí mantém o anterior. Idem p/ nodedepth
+	// R: ï¿½ para o caso de nï¿½o ser substï¿½tuido (i.e nï¿½o entrar no 'if'),
+	// aï¿½ mantï¿½m o anterior. Idem p/ nodedepth
 	uint8_t parent_idx = node_data_get(NODE_PARENTINDEX);
 
 	if (parent_idx != NO_PARENT){
@@ -233,7 +252,7 @@ void link_parent_switch(void)
 	  // Verifica se existe vizinhos com profundidade menor
 	  if (unet_neighbourhood[i].NeighborDistance < _thisNodeDepth)
 	  {
-		  // Verifica se o nodo com menor profundidade é simétrico
+		  // Verifica se o nodo com menor profundidade ï¿½ simï¿½trico
 		  if(is_symmetric_neighbor(i))
 		  {
 			  if (_thisNodeDepth == (unet_neighbourhood[i].NeighborDistance + 1))
@@ -262,21 +281,60 @@ void link_parent_switch(void)
 	  }
 	}
 
-	node_data_set(NODE_DISTANCE, _thisNodeDepth);
-	if (parent_idx != node_data_get(NODE_PARENTINDEX)){
-		node_data_set(NODE_PARENTINDEX, parent_idx);
+	// Check if the buffer is free
+	if(packet_state_down() == PACKET_IDLE){
+		NewParent.Pending = false;
+		node_data_set(NODE_DISTANCE, _thisNodeDepth);
+		if (parent_idx != node_data_get(NODE_PARENTINDEX)){
 
-		// Reduce the ping time in order to propagate the new info
-        extern BRTOS_Sem* Link_Packet_TX_Event;
-        if(Link_Packet_TX_Event != NULL)
-        {
-        	OSSemPost(Link_Packet_TX_Event);
-        }
+			// Make link between node and parent
+			// NOTE: the coordinator ID must be set to zero to this fully work
+			COOJA_PRINTF("#L %d 0;red\n",(unet_neighbourhood[node_data_get(NODE_PARENTINDEX)].Addr_16b)); // Clear last parent
+			COOJA_PRINTF("#L %d 1;red\n",(unet_neighbourhood[parent_idx].Addr_16b));	// Setup the new parent
+
+			node_data_set(NODE_PARENTINDEX, parent_idx);
+
+			// Reduce the ping time in order to propagate the new info
+			extern BRTOS_Sem* Link_Packet_TX_Event;
+			if(Link_Packet_TX_Event != NULL)
+			{
+				OSSemPost(Link_Packet_TX_Event);
+			}
+		}
+	} else {
+		NewParent.NodeDepth = _thisNodeDepth;
+		NewParent.TableIndex = parent_idx;
+		NewParent.Pending = true;
 	}
 
     /* copy 64-bit pan id address */
    // node_pan_id64_set(&p->packet[PANID_64]);
 }
+/*--------------------------------------------------------------------------------------------*/
+
+void link_check_parent_update(void){
+	if(NewParent.Pending){
+		node_data_set(NODE_DISTANCE, NewParent.NodeDepth);
+		if (NewParent.TableIndex != node_data_get(NODE_PARENTINDEX)){
+
+			// Make link between node and parent
+			// NOTE: the coordinator ID must be set to zero to this fully work
+			COOJA_PRINTF("#L %d 0;red\n",(unet_neighbourhood[node_data_get(NODE_PARENTINDEX)].Addr_16b)); // Clear last parent
+			COOJA_PRINTF("#L %d 1;red\n",(unet_neighbourhood[NewParent.TableIndex].Addr_16b));	// Setup the new parent
+			node_data_set(NODE_PARENTINDEX, NewParent.TableIndex);
+
+			NewParent.Pending = false;
+
+			// Reduce the ping time in order to propagate the new info
+			extern BRTOS_Sem* Link_Packet_TX_Event;
+			if(Link_Packet_TX_Event != NULL)
+			{
+				OSSemPost(Link_Packet_TX_Event);
+			}
+		}
+	}
+}
+
 /*--------------------------------------------------------------------------------------------*/
 
 void link_parent_update(uint8_t idx){
@@ -330,15 +388,15 @@ void link_node_distance_update(uint8_t i)
 						link_parent_update(i);
 					}else
 					{
-						// !!!!!!!!!!!!!!!!!!!! Esse segundo teste não parece fazer sentido,
-						// pois se o nó é simétrico, esse teste já foi feito
+						// !!!!!!!!!!!!!!!!!!!! Esse segundo teste nï¿½o parece fazer sentido,
+						// pois se o nï¿½ ï¿½ simï¿½trico, esse teste jï¿½ foi feito
 						// A menos que simetria possa ser somente existir na tarefa do vizinho
-						// R: o teste deixado, pois futuramente a idéia é ter dois valores configuráveis
+						// R: o teste deixado, pois futuramente a idï¿½ia ï¿½ ter dois valores configurï¿½veis
 						// de threshold, um RSSI_THRESHOLD para simetria (que pode inclusive ser 0) e outro
 						// PARENT_RSSI_THRESHOLD que pode ser maior que RSSI_THRESHOLD.
-						// Então, o teste passará a ser com PARENT_RSSI_THRESHOLD. Aí pode ser
-						// simetrico, mas não ter RSSI suficiente para 'parent'.
-						// Obs.: foi corrigido o teste para ficar mais clara a intenção
+						// Entï¿½o, o teste passarï¿½ a ser com PARENT_RSSI_THRESHOLD. Aï¿½ pode ser
+						// simetrico, mas nï¿½o ter RSSI suficiente para 'parent'.
+						// Obs.: foi corrigido o teste para ficar mais clara a intenï¿½ï¿½o
 
 						#define PARENT_RSSI_THRESHOLD RSSI_THRESHOLD
 						if((unet_neighbourhood[i].NeighborRSSI > PARENT_RSSI_THRESHOLD) &&
@@ -367,8 +425,8 @@ void link_node_distance_update(uint8_t i)
 					{
 						if(unet_neighbourhood[i].NeighborDistance == node_data_get(NODE_DISTANCE))
 						{
-							// !!!!!! De novo não faz sentido, pois se o parent é simétrico, sei RSSI
-							// !!!!!! já é acima do threshold
+							// !!!!!! De novo nï¿½o faz sentido, pois se o parent ï¿½ simï¿½trico, sei RSSI
+							// !!!!!! jï¿½ ï¿½ acima do threshold
 							// R: mesma da anterior
 
 							if(unet_neighbourhood[p_idx].NeighborRSSI <= PARENT_RSSI_THRESHOLD ||
@@ -426,7 +484,7 @@ void link_packet_process(packet_t *p)
         unet_neighbourhood[i].NeighborDistance = p->packet[UNET_CTRL_MSG_DISTANCE];
         unet_neighbourhood[i].NeighborStatus.bits.Active = 1;
 
-        /* removido, pois o SN só é armazenado p/ detectar duplicatas de pacotes em roteamento */
+        /* removido, pois o SN sï¿½ ï¿½ armazenado p/ detectar duplicatas de pacotes em roteamento */
         //unet_neighbourhood[i].NeighborLastID = p->info[PKTINFO_SEQNUM];
 
         REQUIRE_OR_EXIT((p->packet[UNET_CTRL_MSG_NB_COUNT] < NEIGHBOURHOOD_SIZE), exit_on_require_error);
@@ -707,5 +765,9 @@ void link_seqnum_reset(uint16_t src_addr)
             unet_neighbourhood[i].NeighborLastID = 0;
 		}
 	}
+}
+/*--------------------------------------------------------------------------------------------*/
+uint16_t link_get_parent_addr16(void){
+	return unet_neighbourhood[node_data_get(NODE_PARENTINDEX)].Addr_16b;
 }
 /*--------------------------------------------------------------------------------------------*/

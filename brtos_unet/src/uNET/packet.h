@@ -183,6 +183,7 @@ void     packet_release_up(void);
 packet_state_t  packet_state_down(void);
 packet_state_t  packet_state_up(void);
 void     packet_print(uint8_t *pkt, uint8_t len);
-
+uint16_t packet_get_source_addr16(packet_t *pkt);
+uint16_t packet_get_dest_addr16(packet_t *pkt);
 
 #endif /* UNET_PACKET_H_ */

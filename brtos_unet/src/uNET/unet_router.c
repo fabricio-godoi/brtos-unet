@@ -263,6 +263,19 @@ uint8_t unet_router_down(void)
     return TRUE;
 }
 /*--------------------------------------------------------------------------------------------*/
+void unet_update_packet_down_dest(void){
+	uint8_t p_idx;
+	uint16_t next_hop_addr16;
+    p_idx = node_data_get(NODE_PARENTINDEX);
+    if (p_idx == NO_PARENT) return; // no parent to be updated
+
+    /* set next hop */
+    next_hop_addr16 = link_neighbor_table_addr16_get(p_idx);
+    ieee802154_dest16_set(&packet_down, next_hop_addr16);
+    packet_down.packet[MAC_DEST_16] = packet_info_get(&packet_down,PKTINFO_DEST16L);
+    packet_down.packet[MAC_DEST_16+1] = packet_info_get(&packet_down,PKTINFO_DEST16H);
+}
+/*--------------------------------------------------------------------------------------------*/
 uint8_t unet_packet_down_send(uint8_t payload_len)
 {
 	extern packet_t packet_down;
@@ -287,7 +300,7 @@ uint8_t unet_packet_down_send(uint8_t payload_len)
     packet_info_set(&packet_down, PKTINFO_SIZE,
     		payload_len + UNET_NWK_HEADER_SIZE + UNET_LLC_HEADER_SIZE + UNET_MAC_HEADER_SIZE);
 
-    /// Essa função deve retornar o estado tb
+    /// Essa funï¿½ï¿½o deve retornar o estado tb
     if (unet_router_down() == TRUE)
     {
     	// Por enquanto retornando ok
@@ -372,7 +385,7 @@ uint8_t unet_packet_output(packet_t *pkt, uint8_t tx_retries, uint16_t delay_ret
 				UNET_RADIO.get(RADIO_STATUS,&state);
 				PRINTF_MAC(1,"TX ISR Timeout. RADIO STATE: %u \r\n", state);
 
-				/* isso nunca deve acontecer, pois indica travamento do rádio */
+				/* isso nunca deve acontecer, pois indica travamento do rï¿½dio */
 				NODESTAT_UPDATE(radioresets);
 				extern void RadioReset(void);
 				RadioReset();
@@ -466,7 +479,7 @@ uint8_t unet_packet_input(packet_t *p)
 			 */
 			r=&packet_down; /* try to use output buffer */
 
-			/* todo: fazer uma função apenas, passando o ponteiro do pacote e
+			/* todo: fazer uma funï¿½ï¿½o apenas, passando o ponteiro do pacote e
 			 * o estado que vai estar em caso de sucesso no acesso ao buffer */
 			if(packet_acquire_down() == PACKET_ACCESS_DENIED)
 			{
@@ -483,8 +496,8 @@ uint8_t unet_packet_input(packet_t *p)
 			{
 				ack_req = ACK_REQ_TRUE;
 
-				/* todo: este código poderá ser colocado mais adiante, pois o resultado não é usado aqui
-				 * só para debug.  */
+				/* todo: este cï¿½digo poderï¿½ ser colocado mais adiante, pois o resultado nï¿½o ï¿½ usado aqui
+				 * sï¿½ para debug.  */
 				if(p->info[PKTINFO_DUPLICATED] == TRUE)
 				{
 					NODESTAT_UPDATE(dupnet);
@@ -559,8 +572,8 @@ uint8_t unet_packet_input(packet_t *p)
 					BYTESTOSHORT(r->info[PKTINFO_DEST16H],r->info[PKTINFO_DEST16L]),
 					r->info[PKTINFO_SEQNUM], p->info[PKTINFO_SEQNUM]);
 
-			/* se o pacote do buffer está esperando um ack, e o ack recebido é para este pacote (mesmo SN e SRC == DEST),
-			 * então marca ele como ack'ed e posta o semáforo de ack recebido. */
+			/* se o pacote do buffer estï¿½ esperando um ack, e o ack recebido ï¿½ para este pacote (mesmo SN e SRC == DEST),
+			 * entï¿½o marca ele como ack'ed e posta o semï¿½foro de ack recebido. */
 			if(r->state == PACKET_WAITING_ACK)
 			{
 				if((p->info[PKTINFO_SEQNUM] == r->info[PKTINFO_SEQNUM]) &&
@@ -575,7 +588,7 @@ uint8_t unet_packet_input(packet_t *p)
 				}
 			}else
 			{
-				/* todo: isso é só para debug e pode ser removido futuramente. */
+				/* todo: isso ï¿½ sï¿½ para debug e pode ser removido futuramente. */
 				PRINTF_LINK(1,"PACKET STATE ERROR: at %u \r\n", __LINE__);
 			}
 			ack_req = ACK_REQ_FALSE;
