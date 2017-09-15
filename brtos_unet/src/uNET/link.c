@@ -16,7 +16,8 @@
 
 // NOTE: the coordinator ID must be set to zero to this fully work
 #ifdef COOJA_ANNOTATION
-#define COOJA_PRINTF(...) PRINTF(__VA_ARGS__)
+#include "stdio.h"
+#define COOJA_PRINTF(...) printf(__VA_ARGS__)
 #else
 #define COOJA_PRINTF(...)
 #endif
@@ -34,17 +35,6 @@ volatile uint8_t               			 	 NeighborLinkPacketTimeCnt  = 1;
 volatile uint8_t just_reset = TRUE;
 volatile uint8_t link_reset_cnt = 0;
 #endif
-
-typedef struct{
-	uint8_t Pending;  // 0 - no update needed, 1 - need to update
-	uint8_t TableIndex;
-	uint8_t NodeDepth;
-	uint16_t ParentNeighborID;
-	uint16_t ParentRSSI;
-}parent_info_t;
-
-// When new parent is detected, this will store it's data
-volatile parent_info_t NewParent = {0, 0, 0, 0, 0};
 
 /*--------------------------------------------------------------------------------------------*/
 packet_t * link_packet_get(void)
@@ -281,62 +271,28 @@ void link_parent_switch(void)
 	  }
 	}
 
-	// Check if the buffer is free
-	if(packet_state_down() == PACKET_IDLE){
-		NewParent.Pending = false;
-		node_data_set(NODE_DISTANCE, _thisNodeDepth);
-		if (parent_idx != node_data_get(NODE_PARENTINDEX)){
+	node_data_set(NODE_DISTANCE, _thisNodeDepth);
+	if (parent_idx != node_data_get(NODE_PARENTINDEX)){
 
-			// Make link between node and parent
-			// NOTE: the coordinator ID must be set to zero to this fully work
-			COOJA_PRINTF("#L %d 0;red\n",(unet_neighbourhood[node_data_get(NODE_PARENTINDEX)].Addr_16b)); // Clear last parent
-			COOJA_PRINTF("#L %d 1;red\n",(unet_neighbourhood[parent_idx].Addr_16b));	// Setup the new parent
+		// Make link between node and parent
+		// NOTE: the coordinator ID must be set to zero to this fully work
+		COOJA_PRINTF("#L %d 0;red\n",(unet_neighbourhood[node_data_get(NODE_PARENTINDEX)].Addr_16b)); // Clear last parent
+		COOJA_PRINTF("#L %d 1;red\n",(unet_neighbourhood[parent_idx].Addr_16b));	// Setup the new parent
 
-			node_data_set(NODE_PARENTINDEX, parent_idx);
+		node_data_set(NODE_PARENTINDEX, parent_idx);
 
-			// Reduce the ping time in order to propagate the new info
-			extern BRTOS_Sem* Link_Packet_TX_Event;
-			if(Link_Packet_TX_Event != NULL)
-			{
-				OSSemPost(Link_Packet_TX_Event);
-			}
+		// Reduce the ping time in order to propagate the new info
+		extern BRTOS_Sem* Link_Packet_TX_Event;
+		if(Link_Packet_TX_Event != NULL)
+		{
+			OSSemPost(Link_Packet_TX_Event);
 		}
-	} else {
-		NewParent.NodeDepth = _thisNodeDepth;
-		NewParent.TableIndex = parent_idx;
-		NewParent.Pending = true;
 	}
 
     /* copy 64-bit pan id address */
    // node_pan_id64_set(&p->packet[PANID_64]);
 }
 /*--------------------------------------------------------------------------------------------*/
-
-void link_check_parent_update(void){
-	if(NewParent.Pending){
-		node_data_set(NODE_DISTANCE, NewParent.NodeDepth);
-		if (NewParent.TableIndex != node_data_get(NODE_PARENTINDEX)){
-
-			// Make link between node and parent
-			// NOTE: the coordinator ID must be set to zero to this fully work
-			COOJA_PRINTF("#L %d 0;red\n",(unet_neighbourhood[node_data_get(NODE_PARENTINDEX)].Addr_16b)); // Clear last parent
-			COOJA_PRINTF("#L %d 1;red\n",(unet_neighbourhood[NewParent.TableIndex].Addr_16b));	// Setup the new parent
-			node_data_set(NODE_PARENTINDEX, NewParent.TableIndex);
-
-			NewParent.Pending = false;
-
-			// Reduce the ping time in order to propagate the new info
-			extern BRTOS_Sem* Link_Packet_TX_Event;
-			if(Link_Packet_TX_Event != NULL)
-			{
-				OSSemPost(Link_Packet_TX_Event);
-			}
-		}
-	}
-}
-
-/*--------------------------------------------------------------------------------------------*/
-
 void link_parent_update(uint8_t idx){
 	node_data_set(NODE_DISTANCE, (uint8_t)(unet_neighbourhood[idx].NeighborDistance + 1));
 	node_data_set(NODE_PARENTINDEX, idx);
