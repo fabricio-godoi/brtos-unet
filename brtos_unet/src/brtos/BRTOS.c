@@ -46,7 +46,7 @@
 *   Revision: 1.60,         Revision: 1.61
 *   Date:     30/11/2010,   Date:     02/12/2010
 *
-*   Authors:  Douglas França
+*   Authors:  Douglas FranÃ§a
 *   Revision: 1.62
 *   Date:     13/12/2010
 *
@@ -62,6 +62,9 @@
 *   Revision: 1.80		,	Revision: 1.90,		Revision: 2.00
 *   Date:     11/11/2015, 	Date: 12/11/2015, 	Date: 19/05/2015
 *
+*   Authors:  Fabricio Negrisolo de Godoi
+*   Revision: 2.05
+*   Date:     01/10/2017
 *
 *********************************************************************************************************/
 
@@ -103,9 +106,10 @@ uint16_t iStackAddress = 0;                       ///< Virtual stack counter - I
 
 
 uint16_t iQueueAddress = 0;                       ///< Queue heap control
+uint16_t iGQueueAddress = 0;                      ///< Generic Queue heap control
 
 #if (!BRTOS_DYNAMIC_TASKS_ENABLED)
-stack_pointer_t StackAddress;           ///< Virtual stack pointer
+stack_pointer_t StackAddress;          ///< Virtual stack pointer
 #endif
 
 
@@ -208,6 +212,14 @@ volatile uint8_t flag_load = TRUE;
   OS_QUEUE	       BRTOS_OS_QUEUE_Table[BRTOS_MAX_QUEUE];	// Table of QUEUE control blocks
 #endif
 
+#if (BRTOS_GEN_QUEUE_EN == 1)
+  /// Generic Queue Control Block
+#ifndef BRTOS_MAX_GQUEUE
+#error "Generic queue enabled, but NOT defined BRTOS_MAX_GQUEUE!"
+#endif
+  BRTOS_Queue      BRTOS_GQueue_Table[BRTOS_MAX_GQUEUE];    	// Table of EVENT control blocks
+  OS_GQUEUE	       BRTOS_OS_GQUEUE_Table[BRTOS_MAX_GQUEUE];	// Table of QUEUE control blocks
+#endif
 
 ///// RAM definitions
 #ifdef OS_CPU_TYPE
@@ -226,6 +238,13 @@ volatile uint8_t flag_load = TRUE;
 	#error("You must define the OS_CPU_TYPE !!!")
 #endif
 
+#if (BRTOS_GEN_QUEUE_EN == 1)
+#ifndef GQUEUE_HEAP_SIZE
+#error "Generic queue is enabled, but heap size NOT defined!"
+#endif
+  unsigned char  GQUEUE_STACK[(GQUEUE_HEAP_SIZE)]; ///< Generic Queue Heap
+#endif ///< (BRTOS_GEN_QUEUE_EN == 1)
+
 #if (PROCESSOR == PIC18)
 #pragma udata ctxram
 #endif
@@ -237,7 +256,6 @@ ContextType ContextTask[NUMBER_OF_TASKS + 1];          ///< Task context info
 static volatile uint32_t OSTimeTaskSwitched = 0UL;				   	   ///< Value of a counter in the last time a task was switched.
 static volatile uint32_t OSTotalRuntime = 0UL;						   ///< Total amount of execution time
 
-extern uint32_t OSGetTimerForRuntimeStats(void);
 void COMPUTE_TASK_LOAD(void){
 	OSTotalRuntime = OSGetTimerForRuntimeStats();
 	if( OSTotalRuntime > OSTimeTaskSwitched ){
@@ -263,10 +281,11 @@ uint8_t OSSchedule(void)
 {
 	uint8_t TaskSelect = 0xFF;
 	uint8_t Priority   = 0;
-	
+
   Priority = SAScheduler(OSReadyList & OSBlockedList);
   TaskSelect = PriorityVector[Priority];
   
+//  PRINTF("Task selected: "); PRINTF(ContextTask[Priority].TaskName); PRINTF("\n");
 	return TaskSelect;
 }
 ////////////////////////////////////////////////////////////
@@ -310,6 +329,24 @@ ostick_t OSGetTickCount(void)
 ostick_t OSGetCount(void)
 {
   return OSTickCounter;
+}
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+
+
+
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+/////      Get the current tick count                  /////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+void OSCountReset(void)
+{
+  OSTickCounter = 0;
 }
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
@@ -401,6 +438,7 @@ uint8_t OSDelayTask(ostick_t time_wait)
         // Return to task when occur delay overflow
         ChangeContext();
         
+
         OSExitCritical();
         
         return OK;
@@ -561,25 +599,26 @@ void OS_TICK_HANDLER(void)
 /////      OS Init Task Scheduler Function             /////
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
-
 uint8_t BRTOSStart(void)
 {
  #if (TASK_WITH_PARAMETERS == 1)
-  if (InstallTask(&Idle, "Idle Task", IDLE_STACK_SIZE, 0, (void*)NULL, NULL) != OK)
+  assert(InstallTask(&Idle, "Idle Task", IDLE_STACK_SIZE, 0, (void*)NULL, NULL) == OK);
  #else
-  if (InstallTask(&Idle, "Idle Task", IDLE_STACK_SIZE, 0, NULL) != OK)
+  assert(InstallTask(&Idle, "Idle Task", IDLE_STACK_SIZE, 0, NULL) == OK);
  #endif
-  {
-    return NO_MEMORY;
-  };
+
+  ////////////////////////////////////////////////////////////
+  /////            Initialize Tick Timer                 /////
+  ////////////////////////////////////////////////////////////
+  TickTimerSetup();
 
 #if (COMPUTES_TASK_LOAD == 1)
-  extern void OSConfigureTimerForRuntimeStats( void );
   OSConfigureTimerForRuntimeStats();
 #endif
 
   currentTask = OSSchedule();
   SPvalue = ContextTask[currentTask].StackPoint;
+
   BTOSStartFirstTask();
   return OK;
 }
@@ -606,7 +645,10 @@ void PreInstallTasks(void)
   NumberOfInstalledTasks = 0;
   TaskAlloc = 0;
   iStackAddress = 0;
+#if (!BRTOS_DYNAMIC_TASKS_ENABLED)
+#pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
   StackAddress = (stack_pointer_t) &STACK;
+#endif
   
   for(i=0;i<configMAX_TASK_INSTALL;i++)
   {
@@ -775,7 +817,7 @@ uint8_t OSBlockTask(BRTOS_TH TaskHandle)
 	  }
   }
 
-  // Determina a prioridade da função
+  // Determina a prioridade da funï¿½ï¿½o
   #if (VERBOSE == 1)
   ContextTask[TaskHandle].Blocked = TRUE;
   #endif
@@ -824,7 +866,7 @@ uint8_t OSUnBlockTask(BRTOS_TH TaskHandle)
   ContextTask[TaskHandle].Blocked = FALSE;
   #endif
   
-  // Determina a prioridade da função  
+  // Determina a prioridade da funï¿½ï¿½o  
   iPriority = ContextTask[TaskHandle].Priority;
 
   OSBlockedList = OSBlockedList | (PriorityMask[iPriority]);
@@ -886,7 +928,7 @@ uint8_t OSBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
       #if (VERBOSE == 1)
       ContextTask[iTask].Blocked = TRUE;
       #endif
-      // Determina a prioridade da função
+      // Determina a prioridade da funï¿½ï¿½o
       iPriority = ContextTask[iTask].Priority;   
       
       OSBlockedList = OSBlockedList & ~(PriorityMask[iPriority]);
@@ -933,7 +975,7 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
   
   for (iTask = TaskStart; iTask <TaskFinish; iTask++)
   {
-    // Determina a prioridade da função
+    // Determina a prioridade da funï¿½ï¿½o
     if (iTask != currentTask)
     {
       iPriority = ContextTask[iTask].Priority;
@@ -994,7 +1036,6 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
      #if (IDLE_HOOK_EN == 1)
         IdleHook();
      #endif
-     
      #if (COMPUTES_CPU_LOAD == 1)
         OSDutyTmp = 1;
      #endif            
@@ -1030,8 +1071,8 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
   OS_SR_SAVE_VAR
   uint8_t i = 0; 
   uint8_t TaskNumber = 0;
-  ContextType * Task;    
-  
+  ContextType * Task;
+
    if (currentTask)
     // Enter Critical Section
     OSEnterCritical();
@@ -1136,10 +1177,10 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
 	#endif
     
 
-   // Determina a prioridade da função
+   // Determina a prioridade da funï¿½ï¿½o
    Task->Priority = iPriority;
 
-   // Determina a tarefa que irá ocupar esta prioridade
+   // Determina a tarefa que irï¿½ ocupar esta prioridade
    PriorityVector[iPriority] = TaskNumber;
    // set the function entry address in the context
    
@@ -1152,8 +1193,8 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
    
    // Incrementa o contador de bytes do stack virtual (HEAP)
    iStackAddress = iStackAddress + (USER_STACKED_BYTES / sizeof(OS_CPU_TYPE));
-   
-   // Posiciona o endereço de stack virtual p/ a próxima tarefa instalada
+
+   // Posiciona o endereï¿½o de stack virtual p/ a prï¿½xima tarefa instalada
    StackAddress = StackAddress + USER_STACKED_BYTES;
    
    Task->TimeToWait = NO_TIMEOUT;
@@ -1169,7 +1210,7 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
    
    if (currentTask)
     // Exit Critical Section
-    OSExitCritical();   
+    OSExitCritical();
    
    return OK;
 }
@@ -1281,18 +1322,18 @@ uint8_t OSUnBlockMultipleTask(uint8_t TaskStart, uint8_t TaskNumber)
    // Posiciona o inicio do stack da tarefa
    Task->StackInit = (unsigned int)Stack;
 
-   // Determina a prioridade da função
+   // Determina a prioridade da funï¿½ï¿½o
    Task->Priority = iPriority;
 
-   // Determina a tarefa que irá ocupar esta prioridade
+   // Determina a tarefa que irï¿½ ocupar esta prioridade
    PriorityVector[iPriority] = TaskNumber;
    // set the function entry address in the context
 
    // Fill the virtual task stack
    #if (TASK_WITH_PARAMETERS == 1)
-   Task->StackPoint = CreateDVirtualStack(FctPtr, (OS_CPU_TYPE)Stack + USER_STACKED_BYTES, parameters);
+   Task->StackPoint = CreateDVirtualStack(FctPtr, (OS_CPU_TYPE)Stack, USER_STACKED_BYTES, parameters);
    #else
-   Task->StackPoint = CreateDVirtualStack(FctPtr, (OS_CPU_TYPE)Stack + USER_STACKED_BYTES);
+   Task->StackPoint = CreateDVirtualStack(FctPtr, (OS_CPU_TYPE)Stack, USER_STACKED_BYTES);
    #endif
 
    Task->StackSize = USER_STACKED_BYTES;
@@ -1433,11 +1474,6 @@ void BRTOSInit(void)
   /////          Initialize global variables             /////
   ////////////////////////////////////////////////////////////  
   PreInstallTasks();  
-  
-  ////////////////////////////////////////////////////////////  
-  /////            Initialize Tick Timer                 /////
-  ////////////////////////////////////////////////////////////  
-  TickTimerSetup(); 
 }
 
 

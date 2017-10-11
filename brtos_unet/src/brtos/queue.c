@@ -2140,4 +2140,3 @@ uint8_t OSGQueuePost(BRTOS_Queue *pont_event, void *pdata)
 
 #endif // BRTOS_GENERIC_QUEUE_ENABLED
 
-

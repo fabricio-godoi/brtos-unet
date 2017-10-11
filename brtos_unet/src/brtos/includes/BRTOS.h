@@ -1337,6 +1337,9 @@ extern volatile uint32_t      OSDutyTmp;
 
 #ifdef BRTOS_GEN_QUEUE_EN
 #if (BRTOS_GEN_QUEUE_EN == 1)
+#ifndef GQUEUE_HEAP_SIZE
+#error "Generic queue is enabled, but heap size NOT defined!"
+#endif
   extern unsigned char GQUEUE_STACK[GQUEUE_HEAP_SIZE];
 #endif
 #endif
